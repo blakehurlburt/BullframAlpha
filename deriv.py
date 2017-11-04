@@ -218,4 +218,5 @@ def takeDeriv(expr):
     expr = funExponentRule(expr)
     return expr
 
-print(takeDeriv(Deriv(Apply(Fun("ln"), Apply(Fun("sin"), Mul([Num(2), Var("x")]))), Var("x"))))
+if __name__ == "__main__":
+    print(takeDeriv(Deriv(Apply(Fun("ln"), Apply(Fun("sin"), Mul([Num(2), Var("x")]))), Var("x"))))
