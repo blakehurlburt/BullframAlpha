@@ -15,6 +15,7 @@ class Add(Expr):
     def contains(self, expr):
         return self == expr or any(map(lambda e: e.contains(expr), self.children))
 
+
 class Sub(Expr):
     def __init__(self, left, right):
         self.left = left
@@ -26,6 +27,9 @@ class Sub(Expr):
     def __eq__(self, other):
         return isinstance(other, Sub) and self.left == other.left and self.right == other.right
 
+    def contains(self, expr):
+        return self == expr or self.left.contains(expr) or self.right.contains(expr)
+
 class Mul(Expr):
     def __init__(self, factors):
         self.children = factors
@@ -35,6 +39,9 @@ class Mul(Expr):
 
     def __eq__(self, other):
         return isinstance(other, Mul) and self.children == other.children
+
+    def contains(self, expr):
+        return self == expr or any(map(lambda e: e.contains(expr), self.children))
 
 class Div(Expr):
     def __init__(self, top, bottom):
@@ -47,6 +54,8 @@ class Div(Expr):
     def __eq__(self, other):
         return isinstance(other, Div) and self.top == other.top and self.bottom == other.bottom
 
+    def contains(self, expr):
+        return self == expr or self.top.contains(expr) or self.bottom.contains(expr)
 
 class Pow(Expr):
         def __init__(self, base, exp):
@@ -59,6 +68,10 @@ class Pow(Expr):
         def __eq__(self, other):
             return isinstance(other, Pow) and self.base == other.base and self.exp == other.exp
 
+        def contains(self, expr):
+            return self == expr or self.base.contains(expr) or self.exp.contains(expr)
+
+
 class Num(Expr):
     def __init__(self, val):
         self.val = val
@@ -68,6 +81,9 @@ class Num(Expr):
 
     def __eq__(self, other):
         return isinstance(other, Num) and self.val == other.val
+
+    def contains(self, expr):
+        return False
 
 class Var(Expr):
     def __init__(self, sym):
@@ -93,6 +109,9 @@ class Deriv(Expr):
     def __eq__(self, other):
         return isinstance(other, Deriv) and self.expr == other.expr and self.sym == other.sym
 
+    def contains(self, expr):
+        return self == expr or self.sym.contains(expr) or self.expr.contains(expr)
+
 class Apply(Expr):
     def __init__(self, fun, expr):
         self.fun = fun
@@ -103,3 +122,6 @@ class Apply(Expr):
 
     def __eq__(self, other):
         return isinstance(other, Apply) and self.expr == other.expr and self.fun == other.fun
+
+    def contains(self, expr):
+        return self == expr or self.expr.contains(expr)
