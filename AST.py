@@ -11,6 +11,9 @@ class Add(Expr):
     def __eq__(self, other):
         return isinstance(other, Add) and self.children == other.children
 
+    def contains(self, expr):
+        return self == expr or any(map(lambda e: e.contains(expr), self.children))
+
 class Sub(Expr):
     def __init__(self, left, right):
         self.left = left
@@ -74,6 +77,9 @@ class Var(Expr):
 
     def __eq__(self, other):
         return isinstance(other, Var) and self.sym == other.sym
+
+    def contains(self, expr):
+        return self == expr
 
 class Deriv(Expr):
     def __init__(self, expr, sym):
