@@ -4,14 +4,12 @@ import AST
 
 def action(ctor):
     def __action(fullString, index, *args):
-        print("fullString = ", fullString)
-        print("index =", index)
-        print("args =", args)
         return ctor(*args[0])
     return __action
 
-var = pp.Word(pp.alphas)
+var = pp.Word(pp.alphas).setParseAction(action(AST.Var))
 number = pp.Word(pp.nums) + pp.Optional(pp.Literal(".") + pp.Word(pp.nums))
+number.setParseAction(action(lambda s: AST.Num(int(s))))
 
 plus  = pp.Literal("+")
 minus = pp.Literal("-")
@@ -43,7 +41,12 @@ def __exprParseAction(fullString, index, arg):
         # another action has already taken place
         return arg
 
-    arg = arg[0]
+    if len(arg) == 1:
+        arg = arg[0]
+        if isinstance(arg, AST.Expr):
+            # another action has already taken place
+            return arg
+
     if len(arg) < 3:
         # a literal
         # TODO fix this for unary functions
@@ -57,7 +60,9 @@ def __exprParseAction(fullString, index, arg):
         "^": AST.Pow,
     }
     op = arg[1]
-    args = (arg[0], arg[2])
+
+    args = (__exprParseAction(fullString, index, arg[0]),
+            __exprParseAction(fullString, index, arg[2]))
 
     if op in "+*":
         return ops[op](args)
