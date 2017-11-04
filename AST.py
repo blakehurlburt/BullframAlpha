@@ -43,16 +43,17 @@ class Div(Expr):
     def __eq__(self, other):
         return isinstance(other, Div) and self.top == other.top and self.bottom == other.bottom
 
+
 class Pow(Expr):
         def __init__(self, base, exp):
-            self.left = base
-            self.right = exp
+            self.base = base
+            self.exp = exp
 
         def __str__(self):
-            return "(^, " +  str(self.left) + ", " + str(self.right) + ")"
+            return "(^, " +  str(self.base) + ", " + str(self.exp) + ")"
 
         def __eq__(self, other):
-            return isinstance(other, Pow) and self.left == other.left and self.right == other.right
+            return isinstance(other, Pow) and self.base == other.base and self.exp == other.exp
 
 class Num(Expr):
     def __init__(self, val):
