@@ -26,7 +26,15 @@ pwrop = pwr
 
 expr = pp.Forward()
 
-func = (var + lpar + expr + rpar).setParseAction(action(AST.Apply))
+func = (var + lpar + expr + pp.ZeroOrMore(pp.Suppress(",") + expr) + rpar)
+def __funcParseAction(fullString, index, arg):
+    #TODO rewrite to handle multivariate functions
+    if arg[0].sym == "deriv":
+        return AST.Deriv(arg[1], arg[2])
+    else:
+        return AST.Apply(arg[0], arg[1])
+
+func.setParseAction(__funcParseAction)
 
 operand = func | number | var
 
@@ -42,7 +50,6 @@ def __exprParseAction(fullString, index, arg):
         # another action has already taken place
         return arg
 
-    print(arg)
     if len(arg) == 1:
         arg = arg[0]
         if isinstance(arg, AST.Expr):
@@ -59,7 +66,7 @@ def __exprParseAction(fullString, index, arg):
 
     if len(arg) < 3: # unary
         return AST.Neg(arg[1])
-        
+
     op = arg[1]
 
     args = (__exprParseAction(fullString, index, arg[0]),
@@ -75,7 +82,7 @@ expr.setParseAction(__exprParseAction)
 pattern = expr + pp.StringEnd()
 
 if __name__ == "__main__":
-    test = "sin(x^2^x - cos(4+3*x)) / -2"
+    test = "deriv(sin(x^2^x - cos(4+3*x)) / -2, x)"
     #test = "sin / 2"
     #test = "sin(x^2^x - 3*x+4)"
     #test = "(x^2^x - 3*x + 4) / 2"
