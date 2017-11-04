@@ -68,7 +68,10 @@ def quotientRule(expr):
     return expr
 
 
-
+def chainRule(expr):
+    if isinstance(expr, Deriv) and isinstance(expr.expr, Apply) and expr.expr.expr != exp.sym:
+        return Mul([takeDeriv(Deriv(Apply(expr.expr.fun, expr.sym), expr.sym)).sub(expr.sym, expr.expr.expr), takeDeriv(expr.expr.expr, expr.sym)])
+    return expr
 
 def takeDeriv(expr):
     expr = identityRule(expr)

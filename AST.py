@@ -15,6 +15,9 @@ class Add(Expr):
     def contains(self, expr):
         return self == expr or any(map(lambda e: e.contains(expr), self.children))
 
+    def sub(self, find, replace):
+        return replace if self == find else Add([c.sub(find, replace) for c in self.children])
+
 
 class Sub(Expr):
     def __init__(self, left, right):
@@ -30,6 +33,9 @@ class Sub(Expr):
     def contains(self, expr):
         return self == expr or self.left.contains(expr) or self.right.contains(expr)
 
+    def sub(self, find, replace):
+        return replace if self == find else Sub(self.left.sub(find, replace), self.right.sub(find, replace))
+
 class Mul(Expr):
     def __init__(self, factors):
         self.children = factors
@@ -42,6 +48,9 @@ class Mul(Expr):
 
     def contains(self, expr):
         return self == expr or any(map(lambda e: e.contains(expr), self.children))
+
+    def sub(self, find, replace):
+        return replace if self == find else Mul([c.sub(find, replace) for c in self.children])
 
 class Div(Expr):
     def __init__(self, top, bottom):
@@ -57,33 +66,43 @@ class Div(Expr):
     def contains(self, expr):
         return self == expr or self.top.contains(expr) or self.bottom.contains(expr)
 
+    def sub(self, find, replace):
+        return replace if self == find else Div(self.top.sub(find, replace), self.bottom.sub(find, replace))
+
+
 class Pow(Expr):
-        def __init__(self, base, exp):
-            self.base = base
-            self.exp = exp
+    def __init__(self, base, exp):
+        self.base = base
+        self.exp = exp
 
-        def __str__(self):
-            return "(^, " +  str(self.base) + ", " + str(self.exp) + ")"
+    def __str__(self):
+        return "(^, " +  str(self.base) + ", " + str(self.exp) + ")"
 
-        def __eq__(self, other):
-            return isinstance(other, Pow) and self.base == other.base and self.exp == other.exp
+    def __eq__(self, other):
+        return isinstance(other, Pow) and self.base == other.base and self.exp == other.exp
 
-        def contains(self, expr):
-            return self == expr or self.base.contains(expr) or self.exp.contains(expr)
+    def contains(self, expr):
+        return self == expr or self.base.contains(expr) or self.exp.contains(expr)
+
+    def sub(self, find, replace):
+        return replace if self == find else Pow(self.base.sub(find, replace), self.exp.sub(find, replace))
+
 
 class Neg(Expr):
-        def __init__(self, exp):
-            self.exp = exp
+    def __init__(self, exp):
+        self.exp = exp
 
-        def __str__(self):
-            return "(-, " + str(self.exp) + ")"
+    def __str__(self):
+        return "(-, " + str(self.exp) + ")"
 
-        def __eq__(self, other):
-            return isinstance(other, Neg) and self.exp == other.exp
+    def __eq__(self, other):
+        return isinstance(other, Neg) and self.exp == other.exp
 
-        def contains(self, expr):
-            return self == expr or self.exp.contains(expr)
+    def contains(self, expr):
+        return self == expr or self.exp.contains(expr)
 
+    def sub(self, find, replace):
+        return replace if self == find else Neg(self.exp.sub(find, replace))
 
 class Num(Expr):
     def __init__(self, val):
@@ -98,6 +117,9 @@ class Num(Expr):
     def contains(self, expr):
         return False
 
+    def sub(self, find, replace):
+        return replace if self == find else self
+
 class Var(Expr):
     def __init__(self, sym):
         self.sym = sym
@@ -110,6 +132,9 @@ class Var(Expr):
 
     def contains(self, expr):
         return self == expr
+
+    def sub(self, find, replace):
+        return replace if self == find else self
 
 class Deriv(Expr):
     def __init__(self, expr, sym):
@@ -125,6 +150,9 @@ class Deriv(Expr):
     def contains(self, expr):
         return self == expr or self.sym.contains(expr) or self.expr.contains(expr)
 
+    def sub(self, find, replace):
+        return replace if self == find else Deriv(self.expr.sub(find, replace), self.sym.sub(find, replace))
+
 class Apply(Expr):
     def __init__(self, fun, expr):
         self.fun = fun
@@ -138,6 +166,9 @@ class Apply(Expr):
 
     def contains(self, expr):
         return self == expr or self.expr.contains(expr)
+
+    def sub(self, find, replace):
+        return replace if self == find else Apply(self.fun, self.expr.sub(find, replace))
 
 class Fun:
     def __init__(self, sym):
