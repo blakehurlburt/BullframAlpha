@@ -31,26 +31,23 @@ func = (var + lpar + expr + rpar).setParseAction(action(AST.Apply))
 operand = func | number | var
 
 expr << pp.Or(pp.operatorPrecedence(operand, [
+    (minus, 1, pp.opAssoc.RIGHT),
     (pwrop, 2, pp.opAssoc.RIGHT),
     (mulop, 2, pp.opAssoc.LEFT),
     (addop, 2, pp.opAssoc.LEFT),
 ]), func)
 
 def __exprParseAction(fullString, index, arg):
-    if isinstance(arg, AST.Expr):
+    if not isinstance(arg, pp.ParseResults):
         # another action has already taken place
         return arg
 
+    print(arg)
     if len(arg) == 1:
         arg = arg[0]
         if isinstance(arg, AST.Expr):
             # another action has already taken place
             return arg
-
-    if len(arg) < 3:
-        # a literal
-        # TODO fix this for unary functions
-        return arg
 
     ops = {
         "+": AST.Add,
@@ -59,6 +56,10 @@ def __exprParseAction(fullString, index, arg):
         "/": AST.Div,
         "^": AST.Pow,
     }
+
+    if len(arg) < 3: # unary
+        return AST.Neg(arg[1])
+        
     op = arg[1]
 
     args = (__exprParseAction(fullString, index, arg[0]),
@@ -74,7 +75,7 @@ expr.setParseAction(__exprParseAction)
 pattern = expr + pp.StringEnd()
 
 if __name__ == "__main__":
-    test = "sin(x^2^x - cos(4+3*x)) / 2"
+    test = "sin(x^2^x - cos(4+3*x)) / -2"
     #test = "sin / 2"
     #test = "sin(x^2^x - 3*x+4)"
     #test = "(x^2^x - 3*x + 4) / 2"
