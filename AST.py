@@ -71,6 +71,19 @@ class Pow(Expr):
         def contains(self, expr):
             return self == expr or self.base.contains(expr) or self.exp.contains(expr)
 
+class Neg(Expr):
+        def __init__(self, exp):
+            self.exp = exp
+
+        def __str__(self):
+            return "(-, " + str(self.exp) + ")"
+
+        def __eq__(self, other):
+            return isinstance(other, Neg) and self.exp == other.exp
+
+        def contains(self, expr):
+            return self == expr or self.exp.contains(expr)
+
 
 class Num(Expr):
     def __init__(self, val):
