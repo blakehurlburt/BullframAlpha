@@ -9,6 +9,12 @@ class Add(Expr):
     def __str__(self):
         return "(+, " + ", ".join(map(str, self.children)) + ")"
 
+    def __eq__(self, other):
+        return isinstance(other, Add) and self.children == other.children
+
+    def contains(self, expr):
+        return self == expr or any(map(lambda e: e.contains(expr), self.children))
+
 class Sub(Expr):
     def __init__(self, left, right):
         self.left = left
@@ -17,6 +23,9 @@ class Sub(Expr):
     def __str__(self):
         return "(-, " +  str(self.left) + ", " + str(self.right) + ")"
 
+    def __eq__(self, other):
+        return isinstance(other, Sub) and self.left == other.left and self.right == other.right
+
 class Mul(Expr):
     def __init__(self, factors):
         self.children = factors
@@ -24,21 +33,31 @@ class Mul(Expr):
     def __str__(self):
         return "(*, " + ", ".join(map(str, self.children)) + ")"
 
+    def __eq__(self, other):
+        return isinstance(other, Mul) and self.children == other.children
+
 class Div(Expr):
     def __init__(self, top, bottom):
-        self.left = top
-        self.right = bottom
+        self.top = top
+        self.bottom = bottom
 
     def __str__(self):
-        return "(/, " +  str(self.left) + ", " + str(self.right) + ")"
+        return "(/, " +  str(self.top) + ", " + str(self.bottom) + ")"
+
+    def __eq__(self, other):
+        return isinstance(other, Div) and self.top == other.top and self.bottom == other.bottom
+
 
 class Pow(Expr):
-        def __init__(self, base, expr):
-            self.left = base
-            self.right = exp
+        def __init__(self, base, exp):
+            self.base = base
+            self.exp = exp
 
         def __str__(self):
-            return "(^, " +  str(self.left) + ", " + str(self.right) + ")"
+            return "(^, " +  str(self.base) + ", " + str(self.exp) + ")"
+
+        def __eq__(self, other):
+            return isinstance(other, Pow) and self.base == other.base and self.exp == other.exp
 
 class Num(Expr):
     def __init__(self, val):
@@ -47,12 +66,21 @@ class Num(Expr):
     def __str__(self):
         return str(self.val)
 
+    def __eq__(self, other):
+        return isinstance(other, Num) and self.val == other.val
+
 class Var(Expr):
     def __init__(self, sym):
         self.sym = sym
 
     def __str__(self):
         return self.sym
+
+    def __eq__(self, other):
+        return isinstance(other, Var) and self.sym == other.sym
+
+    def contains(self, expr):
+        return self == expr
 
 class Deriv(Expr):
     def __init__(self, expr, sym):
@@ -62,6 +90,9 @@ class Deriv(Expr):
     def __str__(self):
         return "(D, " + str(self.expr) + ", " + str(self.sym) + ")"
 
+    def __eq__(self, other):
+        return isinstance(other, Deriv) and self.expr == other.expr and self.sym == other.sym
+
 class Apply(Expr):
     def __init__(self, fun, expr):
         self.fun = fun
@@ -69,3 +100,6 @@ class Apply(Expr):
 
     def __str__(self):
         return "(" + str(self.fun) + ", " + str(self.expr) + ")"
+
+    def __eq__(self, other):
+        return isinstance(other, Apply) and self.expr == other.expr and self.fun == other.fun
