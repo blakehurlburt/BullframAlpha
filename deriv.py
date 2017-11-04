@@ -142,8 +142,9 @@ def arcsinRule(expr):
     return expr
 
 def chainRule(expr):
-    if isinstance(expr, Deriv) and isinstance(expr.expr, Apply) and expr.expr.expr != exp.sym:
-        return Mul([takeDeriv(Deriv(Apply(expr.expr.fun, expr.sym), expr.sym)).sub(expr.sym, expr.expr.expr), takeDeriv(expr.expr.expr, expr.sym)])
+    if isinstance(expr, Deriv) and isinstance(expr.expr, Apply) and expr.expr.expr != expr.sym:
+        return Mul([takeDeriv(Deriv(Apply(expr.expr.fun, expr.sym), expr.sym)).sub(expr.sym, expr.expr.expr),\
+                    takeDeriv(Deriv(expr.expr.expr, expr.sym))])
     return expr
 
 def arccosRule(expr):
@@ -183,6 +184,13 @@ def arccotRule(expr):
             return Div(Num(-1), Add([Num(1), Pow(expr.expr.expr, Num(2))]))
     return expr
 
+def lnRule(expr):
+    if isinstance(expr, Deriv):
+        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "ln"\
+        and expr.expr.expr == expr.sym:
+            return Div(Num(1), expr.sym)
+    return expr
+
 def takeDeriv(expr):
     expr = identityRule(expr)
     expr = constantRule(expr)
@@ -193,6 +201,7 @@ def takeDeriv(expr):
     expr = productRule(expr)
     expr = quotientRule(expr)
     expr = exponentRule(expr)
+    expr = lnRule(expr)
     expr = sinRule(expr)
     expr = cosRule(expr)
     expr = tanRule(expr)
@@ -209,4 +218,4 @@ def takeDeriv(expr):
     expr = funExponentRule(expr)
     return expr
 
-print(takeDeriv(Deriv(Pow(Var("x"),Var("x")), Var("x"))))
+print(takeDeriv(Deriv(Apply(Fun("ln"), Apply(Fun("sin"), Mul([Num(2), Var("x")]))), Var("x"))))
