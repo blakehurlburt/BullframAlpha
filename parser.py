@@ -30,7 +30,12 @@ func = (var + lpar + expr + pp.ZeroOrMore(pp.Suppress(",") + expr) + rpar)
 def __funcParseAction(fullString, index, arg):
     #TODO rewrite to handle multivariate functions
     if arg[0].sym == "deriv":
-        return AST.Deriv(arg[1], arg[2])
+        return AST.Deriv(*arg[1:])
+    elif arg[0].sym == "int":
+        if len(arg) < 4: #indefinite
+            return AST.Int(*arg[1:])
+        else:
+            return AST.DefInt(*arg[1:])
     else:
         return AST.Apply(arg[0], arg[1])
 
@@ -82,7 +87,8 @@ expr.setParseAction(__exprParseAction)
 pattern = expr + pp.StringEnd()
 
 if __name__ == "__main__":
-    test = "deriv(sin(x^2^x - cos(4+3*x)) / -2, x)"
+    test = "deriv(sin(x^2^x - cos(4+3*x)) / 4*(-2 +x), x)"
+    #test = "int(sin(x^2^x - cos(4+3*x)) / 4*(-2 +x), x, -sin(x), sin(x))"
     #test = "sin / 2"
     #test = "sin(x^2^x - 3*x+4)"
     #test = "(x^2^x - 3*x + 4) / 2"

@@ -125,6 +125,36 @@ class Deriv(Expr):
     def contains(self, expr):
         return self == expr or self.sym.contains(expr) or self.expr.contains(expr)
 
+class Int(Expr):
+    def __init__(self, expr, sym):
+        self.sym = sym
+        self.expr = expr
+
+    def __str__(self):
+        return "(I, " + str(self.expr) + ", " + str(self.sym) + ")"
+
+    def __eq__(self, other):
+        return isinstance(other, Int) and self.expr == other.expr and self.sym == other.sym
+
+    def contains(self, expr):
+        return self == expr or self.sym.contains(expr) or self.expr.contains(expr)
+
+class DefInt(Expr):
+    def __init__(self, expr, sym, lower, upper):
+        self.sym = sym
+        self.expr = expr
+        self.lower = lower
+        self.upper = upper
+
+    def __str__(self):
+        return "(I, " + ", ".join(map(str, [self.expr, self.sym, self.lower, self.upper])) + ")"
+
+    def __eq__(self, other):
+        return isinstance(other, DefInt) and [self.expr, self.sym, self.lower, self.upper] == [other.expr, other.sym, other.lower, other.upper]
+
+    def contains(self, expr):
+        return self == expr or self.sym.contains(expr) or self.expr.contains(expr)
+
 class Apply(Expr):
     def __init__(self, fun, expr):
         self.fun = fun
