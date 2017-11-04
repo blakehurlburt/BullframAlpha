@@ -4,19 +4,22 @@ class Expr:
 
 class Add(Expr):
     def __init__(self, addends):
-        self.children = addends
+        self.terms = addends
 
     def __str__(self):
-        return "(+, " + ", ".join(map(str, self.children)) + ")"
+        return "(+, " + ", ".join(map(str, self.terms)) + ")"
 
     def __eq__(self, other):
-        return isinstance(other, Add) and self.children == other.children
+        return isinstance(other, Add) and self.terms == other.terms
 
     def contains(self, expr):
-        return self == expr or any(map(lambda e: e.contains(expr), self.children))
+        return self == expr or any(map(lambda e: e.contains(expr), self.terms))
 
     def sub(self, find, replace):
-        return replace if self == find else Add([c.sub(find, replace) for c in self.children])
+        return replace if self == find else Add([c.sub(find, replace) for c in self.terms])
+
+    def map(self, fun):
+        return fun(Add([x.map(fun) for x in self.terms]))
 
 
 class Sub(Expr):
@@ -36,21 +39,27 @@ class Sub(Expr):
     def sub(self, find, replace):
         return replace if self == find else Sub(self.left.sub(find, replace), self.right.sub(find, replace))
 
+    def map(self, fun):
+        return fun(Sub(self.left.map(fun), self.right.map(fun)))
+
 class Mul(Expr):
     def __init__(self, factors):
-        self.children = factors
+        self.factors = factors
 
     def __str__(self):
-        return "(*, " + ", ".join(map(str, self.children)) + ")"
+        return "(*, " + ", ".join(map(str, self.factors)) + ")"
 
     def __eq__(self, other):
-        return isinstance(other, Mul) and self.children == other.children
+        return isinstance(other, Mul) and self.factors == other.factors
 
     def contains(self, expr):
-        return self == expr or any(map(lambda e: e.contains(expr), self.children))
+        return self == expr or any(map(lambda e: e.contains(expr), self.factors))
 
     def sub(self, find, replace):
-        return replace if self == find else Mul([c.sub(find, replace) for c in self.children])
+        return replace if self == find else Mul([c.sub(find, replace) for c in self.factors])
+
+    def map(self, fun):
+        return fun(Mul([x.map(fun) for x in self.factors]))
 
 class Div(Expr):
     def __init__(self, top, bottom):
@@ -68,6 +77,9 @@ class Div(Expr):
 
     def sub(self, find, replace):
         return replace if self == find else Div(self.top.sub(find, replace), self.bottom.sub(find, replace))
+
+    def map(self, fun):
+        return fun(Div(self.left.map(fun), self.right.map(fun)))
 
 
 class Pow(Expr):
@@ -87,6 +99,9 @@ class Pow(Expr):
     def sub(self, find, replace):
         return replace if self == find else Pow(self.base.sub(find, replace), self.exp.sub(find, replace))
 
+    def map(self, fun):
+        return fun(Pow(self.base.map(fun), self.exp.map(fun)))
+
 
 class Neg(Expr):
     def __init__(self, exp):
@@ -104,6 +119,9 @@ class Neg(Expr):
     def sub(self, find, replace):
         return replace if self == find else Neg(self.exp.sub(find, replace))
 
+    def map(self, fun):
+        return fun(Neg(self.exp.map(fun)))
+
 class Num(Expr):
     def __init__(self, val):
         self.val = val
@@ -120,6 +138,9 @@ class Num(Expr):
     def sub(self, find, replace):
         return replace if self == find else self
 
+    def map(self, fun):
+        return fun(self)
+
 class Var(Expr):
     def __init__(self, sym):
         self.sym = sym
@@ -135,6 +156,9 @@ class Var(Expr):
 
     def sub(self, find, replace):
         return replace if self == find else self
+
+    def map(self, fun):
+        return fun(self)
 
 class Deriv(Expr):
     def __init__(self, expr, sym):
@@ -153,6 +177,10 @@ class Deriv(Expr):
     def sub(self, find, replace):
         return replace if self == find else Deriv(self.expr.sub(find, replace), self.sym.sub(find, replace))
 
+    def map(self, fun):
+        # should we modify the sym?
+        return fun(Deriv(self.expr.map(fun), self.sym.map(fun)))
+
 class Int(Expr):
     def __init__(self, expr, sym):
         self.sym = sym
@@ -169,6 +197,10 @@ class Int(Expr):
 
     def sub(self, find, replace):
         return replace if self == find else Int(self.expr.sub(find, replace), self.sym.sub(find, replace))
+
+    def map(self, fun):
+        # should we modify the sym?
+        return fun(Int(self.expr.map(fun), self.sym.map(fun)))
 
 class DefInt(Expr):
     def __init__(self, expr, sym, lower, upper):
@@ -191,6 +223,10 @@ class DefInt(Expr):
         return replace if self == find else DefInt(self.expr.sub(find, replace), self.sym.sub(find, replace), \
                                                 self.lower.sub(find, replace), self.upper.sub(find, replace))
 
+    def map(self, fun):
+        # should we modify the sym?
+        return fun(DefInt(self.expr.map(fun), self.sym.map(fun)), self.lower.map(fun), self.upper.map(fun))
+
 class Apply(Expr):
     def __init__(self, fun, expr):
         self.fun = fun
@@ -208,6 +244,9 @@ class Apply(Expr):
     def sub(self, find, replace):
         return replace if self == find else Apply(self.fun, self.expr.sub(find, replace))
 
+    def map(self, fun):
+        return fun(Apply(self.fun.map(fun), self.expr.map(fun)))
+
 class Fun:
     def __init__(self, sym):
         self.sym = sym
@@ -217,3 +256,6 @@ class Fun:
 
     def __eq__(self, other):
         return self.sym == self.other
+
+    def map(self, fun):
+        return fun(self)

@@ -18,7 +18,7 @@ def constMultRule(expr):
         if isinstance(expr.expr, Mul):
             consts = []
             notconsts = []
-            for e in expr.expr.children:
+            for e in expr.expr.factors:
                 if isinstance(e, Num) or isinstance(e, Var) and e != expr.sym:
                     consts.append(e)
                 else:
@@ -36,7 +36,7 @@ def constMultRule(expr):
 def sumRule(expr):
     if isinstance(expr, Deriv):
         if isinstance(expr.expr, Add):
-            return Add([takeDeriv(Deriv(c, expr.sym)) for c in expr.expr.children])
+            return Add([takeDeriv(Deriv(c, expr.sym)) for c in expr.expr.terms])
     return expr
 
 def differenceRule(expr):
@@ -56,12 +56,12 @@ def powerRule(expr):
 def productRule(expr):
     if isinstance(expr, Deriv):
         if isinstance(expr.expr, Mul):
-            if len(expr.expr.children) == 2:
-                return Add([Mul([expr.expr.children[0], takeDeriv(Deriv(expr.expr.children[1], expr.sym))]),
-                            Mul([expr.expr.children[1], takeDeriv(Deriv(expr.expr.children[0], expr.sym))])])
+            if len(expr.expr.factors) == 2:
+                return Add([Mul([expr.expr.factors[0], takeDeriv(Deriv(expr.expr.factors[1], expr.sym))]),
+                            Mul([expr.expr.factors[1], takeDeriv(Deriv(expr.expr.factors[0], expr.sym))])])
             else:
-                return Add([Mul([expr.expr.children[0], takeDeriv(Deriv(Mul(expr.expr.children[1:]), expr.sym))])
-                       ,Mul([Mul(expr.expr.children[1:]), takeDeriv(Deriv(expr.expr.children[0], expr.sym))])])
+                return Add([Mul([expr.expr.factors[0], takeDeriv(Deriv(Mul(expr.expr.factors[1:]), expr.sym))])
+                       ,Mul([Mul(expr.expr.factors[1:]), takeDeriv(Deriv(expr.expr.factors[0], expr.sym))])])
     return expr
 
 def quotientRule(expr):
