@@ -1,5 +1,6 @@
 from AST import *
 
+
 def identityRule(expr):
     if isinstance(expr, Deriv):
         if isinstance(expr.expr, Var) and expr.expr == expr.sym:
@@ -55,20 +56,115 @@ def powerRule(expr):
 def productRule(expr):
     if isinstance(expr, Deriv):
         if isinstance(expr.expr, Mul):
-            return Add([Mul([expr.expr.children[0], takeDeriv(Deriv(Mul(expr.expr.children[1:]), expr.sym))])
-                       ,Mul([Mul(expr.expr.children[1:]), takeDeriv(Deriv(expr.expr.children[0]), expr.sym)])])
+            if len(expr.expr.children) == 2:
+                return Add([Mul([expr.expr.children[0], takeDeriv(Deriv(expr.expr.children[1], expr.sym))]),
+                            Mul([expr.expr.children[1], takeDeriv(Deriv(expr.expr.children[0], expr.sym))])])
+            else:
+                return Add([Mul([expr.expr.children[0], takeDeriv(Deriv(Mul(expr.expr.children[1:]), expr.sym))])
+                       ,Mul([Mul(expr.expr.children[1:]), takeDeriv(Deriv(expr.expr.children[0], expr.sym))])])
     return expr
 
 def quotientRule(expr):
     if isinstance(expr, Deriv):
         if isinstance(expr.expr, Div):
-            return Div(Sub(Mul([Deriv(expr.expr.top, expr.sym), expr.expr.bottom]),
-                           Mul([Deriv(expr.expr.bottom, expr.sym), expr.expr.top])),
+            return Div(Sub(Mul([takeDeriv(Deriv(expr.expr.top, expr.sym)), expr.expr.bottom]),
+                           Mul([takeDeriv(Deriv(expr.expr.bottom, expr.sym)), expr.expr.top])),
                        Pow(expr.expr.bottom, Num(2)))
     return expr
 
+def exponentRule(expr):
+    if isinstance(expr, Deriv):
+        if isinstance(expr.expr, Pow) and expr.expr.exp.contains(expr.sym)\
+            and not expr.expr.base.contains(expr.sym):
 
+            return Mul([Mul([expr.expr.base, expr.expr.exp]), Apply("ln", expr.expr.exp)])
+    return expr
 
+def sinRule(expr):
+    if isinstance(expr, Deriv):
+        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "sin"\
+        and expr.expr.expr == expr.sym:
+            return Apply(Fun("cos"), expr.expr.expr)
+    return expr
+
+def cosRule(expr):
+    if isinstance(expr, Deriv):
+        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "cos"\
+        and expr.expr.expr == expr.sym:
+            return Mul([Apply(Fun("sin"), expr.expr.expr), Num(-1)])
+    return expr
+
+def tanRule(expr):
+    if isinstance(expr, Deriv):
+        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "tan"\
+        and expr.expr.expr == expr.sym:
+            return Pow(Apply(Fun("sec"), expr.expr.expr), Num(2))
+    return expr
+
+def secRule(expr):
+    if isinstance(expr, Deriv):
+        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "sec"\
+        and expr.expr.expr == expr.sym:
+            return Mul([Apply(Fun("sec"), expr.expr.expr), Apply(Fun("tan"), expr.expr.expr)])
+    return expr
+
+def cscRule(expr):
+    if isinstance(expr, Deriv):
+        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "csc"\
+        and expr.expr.expr == expr.sym:
+            return Mul([Num(-1), Mul([Apply(Fun("csc"), expr.expr.expr), Apply(Fun("cot"), expr.expr.expr)])])
+    return expr
+
+def cotRule(expr):
+    if isinstance(expr, Deriv):
+        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "cot"\
+        and expr.expr.expr == expr.sym:
+            return Mul([Num(-1), Pow(Apply(Fun("csc"), expr.expr.expr), Num(2))])
+    return expr
+
+def arcsinRule(expr):
+    if isinstance(expr, Deriv):
+        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "arcsin"\
+        and expr.expr.expr == expr.sym:
+            return Div(Num(1), Pow(Sub(Num(1), Pow(expr.expr.expr, Num(2))), Div(Num(1),Num(2))))
+    return expr
+
+def arccosRule(expr):
+    if isinstance(expr, Deriv):
+        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "arccos"\
+        and expr.expr.expr == expr.sym:
+            return Div(Num(-1), Pow(Sub(Num(1), Pow(expr.expr.expr, Num(2))), Div(Num(1),Num(2))))
+    return expr
+
+def arctanRule(expr):
+    if isinstance(expr, Deriv):
+        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "arctan"\
+        and expr.expr.expr == expr.sym:
+            return Div(Num(1), Add([Num(1), Pow(expr.expr.expr, Num(2))]))
+    return expr
+
+def arcsecRule(expr):
+    if isinstance(expr, Deriv):
+        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "arcsec"\
+        and expr.expr.expr == expr.sym:
+            return Div(Num(1), Mul([Apply("abs", expr.expr.expr),\
+                   (Pow(Sub(Pow(expr.expr.expr, Num(2)), Num(1)), Div(Num(1),Num(2))))]))
+    return expr
+
+def arccscRule(expr):
+    if isinstance(expr, Deriv):
+        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "arccsc"\
+        and expr.expr.expr == expr.sym:
+            return Div(Num(-1), Mul([Apply("abs", expr.expr.expr),\
+                   (Pow(Sub(Pow(expr.expr.expr, Num(2)), Num(1)), Div(Num(1),Num(2))))]))
+    return expr
+
+def arccotRule(expr):
+    if isinstance(expr, Deriv):
+        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "arccot"\
+        and expr.expr.expr == expr.sym:
+            return Div(Num(-1), Add([Num(1), Pow(expr.expr.expr, Num(2))]))
+    return expr
 
 def takeDeriv(expr):
     expr = identityRule(expr)
@@ -79,6 +175,19 @@ def takeDeriv(expr):
     expr = powerRule(expr)
     expr = productRule(expr)
     expr = quotientRule(expr)
+    expr = exponentRule(expr)
+    expr = sinRule(expr)
+    expr = cosRule(expr)
+    expr = tanRule(expr)
+    expr = secRule(expr)
+    expr = cscRule(expr)
+    expr = cotRule(expr)
+    expr = arcsinRule(expr)
+    expr = arccosRule(expr)
+    expr = arctanRule(expr)
+    expr = arcsecRule(expr)
+    expr = arccscRule(expr)
+    expr = arccotRule(expr)
     return expr
 
-print(takeDeriv(Deriv(Mul([Var("x"),Var("x")]), Var("x"))))
+print(takeDeriv(Deriv(Apply(Fun("arccot"),Var("x")), Var("x"))))
