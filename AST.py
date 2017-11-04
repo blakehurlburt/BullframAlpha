@@ -25,19 +25,19 @@ class Mul(Expr):
 
 class Div(Expr):
     def __init__(self, top, bottom):
-        self.left = top
-        self.right = bottom
+        self.top = top
+        self.bottom = bottom
 
     def __str__(self):
-        return "(/, " +  str(self.left) + ", " + str(self.right) + ")"
+        return "(/, " +  str(self.top) + ", " + str(self.bottom) + ")"
 
 class Pow(Expr):
-        def __init__(self, base, expr):
-            self.left = base
-            self.right = exp
+        def __init__(self, base, exp):
+            self.base = base
+            self.exp = exp
 
         def __str__(self):
-            return "(^, " +  str(self.left) + ", " + str(self.right) + ")"
+            return "(^, " +  str(self.base) + ", " + str(self.exp) + ")"
 
 class Num(Expr):
     def __init__(self, val):
