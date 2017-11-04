@@ -125,3 +125,13 @@ class Apply(Expr):
 
     def contains(self, expr):
         return self == expr or self.expr.contains(expr)
+
+class Fun:
+    def __init__(self, sym):
+        self.sym = sym
+
+    def __str__(self):
+        return self.sym
+
+    def __eq__(self, other):
+        return self.sym == self.other
