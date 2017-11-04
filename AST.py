@@ -153,6 +153,44 @@ class Deriv(Expr):
     def sub(self, find, replace):
         return replace if self == find else Deriv(self.expr.sub(find, replace), self.sym.sub(find, replace))
 
+class Int(Expr):
+    def __init__(self, expr, sym):
+        self.sym = sym
+        self.expr = expr
+
+    def __str__(self):
+        return "(I, " + str(self.expr) + ", " + str(self.sym) + ")"
+
+    def __eq__(self, other):
+        return isinstance(other, Int) and self.expr == other.expr and self.sym == other.sym
+
+    def contains(self, expr):
+        return self == expr or self.sym.contains(expr) or self.expr.contains(expr)
+
+    def sub(self, find, replace):
+        return replace if self == find else Int(self.expr.sub(find, replace), self.sym.sub(find, replace))
+
+class DefInt(Expr):
+    def __init__(self, expr, sym, lower, upper):
+        self.sym = sym
+        self.expr = expr
+        self.lower = lower
+        self.upper = upper
+
+    def __str__(self):
+        return "(I, " + ", ".join(map(str, [self.expr, self.sym, self.lower, self.upper])) + ")"
+
+    def __eq__(self, other):
+        return isinstance(other, DefInt) and [self.expr, self.sym, self.lower, self.upper] == [other.expr, other.sym, other.lower, other.upper]
+
+    def contains(self, expr):
+        return self == expr or self.sym.contains(expr) or self.expr.contains(expr)
+
+    def sub(self, find, replace):
+        # TODO: handle when subbing in something involving the variable we're integrating wrt
+        return replace if self == find else DefInt(self.expr.sub(find, replace), self.sym.sub(find, replace), \
+                                                self.lower.sub(find, replace), self.upper.sub(find, replace))
+
 class Apply(Expr):
     def __init__(self, fun, expr):
         self.fun = fun
