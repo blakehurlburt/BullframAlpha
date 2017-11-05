@@ -4,6 +4,8 @@ from deriv import takeDeriv
 from parser import parse
 from time import sleep
 import math
+from polydiv import polydiv
+
 
 def constantRule(expr):
     if isinstance(expr, Int):
@@ -176,13 +178,19 @@ def usubRule(expr):
     apply_funcs=[Fun("sin"), Fun("cos"), Fun("tan"), Fun("sec"), Fun("csc"), Fun("cot"), Fun("ln")]
     if isinstance(expr, Int):
         if isinstance(expr.expr, Div):
+
             u = expr.expr.bottom
             sub_var = str(expr.sym)+("u")
             new_integrand = simplify(Div(expr.expr.top, Mul([takeDeriv(Deriv(u, expr.sym)), Var(sub_var)])))
             if  not new_integrand.contains(expr.sym):
                 usubintegral = takeInt(Int(new_integrand, Var(sub_var)))
-                usubintegral = usubintegral.sub(Var(sub_var),u)
-                return usubintegral
+                usubintegral = usubintegral.sub(Var(sub_var), u)
+            else:
+                long_div_integrand = simplify((divide(new_integrand, u, expr.sym)))
+                if not long_div_integrand.contains(expr.sym):
+                    usubintegral = takeInt(Int(long_div_integrand, Var(sub_var)))
+                    usubintegral = usubintegral.sub(Var(sub_var), u)
+                    return usubintegral
 
         new_expr = simplify(expr.expr)
 
@@ -199,6 +207,14 @@ def usubRule(expr):
                 usubintegral = takeInt(Int(new_integrand, Var(sub_var)))
                 usubintegral = usubintegral.sub(Var(sub_var),u)
                 return usubintegral
+
+            else:
+                long_div_integrand = simplify(polydiv(new_integrand, expr.sym))
+
+                if not long_div_integrand.contains(expr.sym):
+                    usubintegral = takeInt(Int(long_div_integrand, Var(sub_var)))
+                    usubintegral = usubintegral.sub(Var(sub_var), u)
+                    return usubintegral
 
         if isinstance(new_expr.factors[0], Pow):
             u = new_expr.factors[0].base
@@ -339,7 +355,7 @@ def takeInt(expr):
     #expr = expr.sub(Num(math.e), Var("e"))
     return expr
 
-test = "int(x*e^x, x)"
+test = "int(x*(x+1)^(1/2), x)"
 print("test: " + test)
 expr = parse(test)
 print("expr: " + str(expr))

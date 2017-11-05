@@ -1,4 +1,5 @@
 import AST
+from simplify import simplify 
 
 import itertools as it
 
