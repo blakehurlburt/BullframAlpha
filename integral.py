@@ -203,13 +203,13 @@ def usubRule(expr):
                 usubintegral = usubintegral.sub(Var(sub_var),u)
                 return usubintegral
 
-            else:
-                long_div_integrand = simplify(polydiv(new_integrand, expr.sym))
-
-                if not long_div_integrand.contains(expr.sym):
-                    usubintegral = takeInt(Int(long_div_integrand, Var(sub_var)))
-                    usubintegral = usubintegral.sub(Var(sub_var), u)
-                    return usubintegral
+            # else:
+            #     long_div_integrand = simplify(polydiv(new_integrand, expr.sym))
+            #
+            #     if not long_div_integrand.contains(expr.sym):
+            #         usubintegral = takeInt(Int(long_div_integrand, Var(sub_var)))
+            #         usubintegral = usubintegral.sub(Var(sub_var), u)
+            #         return usubintegral
 
         if isinstance(new_expr.factors[0], Pow):
             u = new_expr.factors[0].base
