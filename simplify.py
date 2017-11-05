@@ -1,84 +1,239 @@
 from AST import *
 
-def identityRule(expr):
-    if isinstance(expr, Deriv):
-        if isinstance(expr.expr, Var) and expr.expr == expr.sym:
-            return Num(1)
+def flattenMul(expr):
+    if isinstance(expr, Mul):
+        newFactors = []
+        for f in expr.factors:
+            if isinstance(f, Mul):
+                newFactors.extend(f.factors)
+            else:
+                newFactors.append(f)
+        return Mul(newFactors)
     return expr
 
-def constantRule(expr):
-    if isinstance(expr, Deriv):
-        if not expr.expr.contains(expr.sym):
+def flattenAdd(expr):
+    if isinstance(expr, Add):
+        newTerms = []
+        for t in expr.terms:
+            if isinstance(t, Add):
+                newTerms.extend(t.terms)
+            else:
+                newTerms.append(t)
+        return Add(newTerms)
+    return expr
+
+def mulZero(expr):
+    if isinstance(expr, Mul):
+        if any(map(lambda x: x == Num(0), expr.factors)):
             return Num(0)
     return expr
 
-def constMultRule(expr):
-    if isinstance(expr, Deriv):
-        if isinstance(expr.expr, Mul):
-            consts = []
-            notconsts = []
-            for e in expr.expr.children:
-                if isinstance(e, Num) or isinstance(e, Var) and e != expr.sym:
-                    consts.append(e)
-                else:
-                    notconsts.append(e)
-            if notconsts == []:
-                return Num(0)
-            if consts == []:
+def mulOne(expr):
+    if isinstance(expr, Mul):
+        newFactors = [f for f in expr.factors if f != Num(1)]
+        if len(newFactors) == 0:
+            return Num(1)
+        elif len(newFactors) == 1:
+            return newFactors[0]
+        else:
+            return Mul(newFactors)
+    return expr
+
+def addZero(expr):
+    if isinstance(expr, Add):
+        newTerms = [t for t in expr.terms if t != Num(0)]
+        if len(newTerms) == 0:
+            return Num(0)
+        elif len(newTerms) == 1:
+            return newTerms[0]
+        else:
+            return Add(newTerms)
+    return expr
+
+def powZero(expr):
+    if isinstance(expr, Pow) and expr.exp == Num(0):
+        return Num(1)
+    return expr
+
+def powOne(expr):
+    if isinstance(expr, Pow) and expr.exp == Num(1):
+        return expr.base
+    return expr
+
+def addConsts(expr):
+    if isinstance(expr, Add):
+        sum = 0
+        for t in expr.terms:
+            if not isinstance(t, Num):
                 return expr
-            c = consts[0] if len(consts) == 1 else Mul(consts)
-            nc = notconsts[0] if len(notconsts) == 1 else Mul(notconsts)
-
-            return Mul([c, takeDeriv(Deriv(nc, expr.sym))])
+            sum += t.val
+        return Num(sum)
     return expr
 
-def sumRule(expr):
-    if isinstance(expr, Deriv):
-        if isinstance(expr.expr, Add):
-            return Add([takeDeriv(Deriv(c, expr.sym)) for c in expr.expr.children])
+def subConsts(expr):
+    if isinstance(expr, Sub) and isinstance(expr.left, Num) and isinstance(expr.right, Num):
+        return Num(expr.left.val - expr.right.val)
     return expr
 
-def differenceRule(expr):
-    if isinstance(expr, Deriv):
-        if isinstance(expr.expr, Sub):
-            return Sub(takeDeriv(Deriv(expr.expr.left, expr.sym)), takeDeriv(Deriv(expr.expr.right, expr.sym)))
+def mulConsts(expr):
+    if isinstance(expr, Mul):
+        prod = 1
+        for f in expr.factors:
+            if not isinstance(f, Num):
+                return expr
+            prod *= f.val
+        return Num(prod)
     return expr
 
-def powerRule(expr):
-    if isinstance(expr, Deriv):
-        if isinstance(expr.expr, Pow) \
-            and isinstance(expr.expr.base, Var) and expr.expr.base == expr.sym \
-            and not expr.expr.exp.contains(expr.sym):
-                return Mul([expr.expr.exp, Pow(expr.expr.base, Sub(expr.expr.exp, Num(1)))])
+def divConsts(expr):
+    if isinstance(expr, Sub) and isinstance(expr.top, Num) and isinstance(expr.bottom, Num):
+        return Num(expr.top.val / expr.bottom.val)
     return expr
 
-def productRule(expr):
-    if isinstance(expr, Deriv):
-        if isinstance(expr.expr, Mul):
-            return Add([Mul([expr.expr.children[0], takeDeriv(Deriv(Mul(expr.expr.children[1:]), expr.sym))])
-                       ,Mul([Mul(expr.expr.children[1:]), takeDeriv(Deriv(expr.expr.children[0]), expr.sym)])])
+def powConsts(expr):
+    if isinstance(expr, Pow) and isinstance(expr.base, Num) and isinstance(expr.exp, Num):
+        return Num(expr.base.val ** expr.exp.val)
     return expr
 
-def quotientRule(expr):
-    if isinstance(expr, Deriv):
-        if isinstance(expr.expr, Div):
-            return Div(Sub(Mul([Deriv(expr.expr.top, expr.sym), expr.expr.bottom]),
-                           Mul([Deriv(expr.expr.bottom, expr.sym), expr.expr.top])),
-                       Pow(expr.expr.bottom, Num(2)))
+def removeSub(expr):
+    if isinstance(expr, Sub):
+        return Add([expr.left, Mul([Num(-1), expr.right])])
+    return expr
+
+def removeDiv(expr):
+    if isinstance(expr, Div):
+        return Mul([expr.top, Pow(expr.bottom, Num(-1))])
+    return expr
+
+def mulPows(expr):
+    if isinstance(expr, Pow) and isinstance(expr.base, Pow):
+        return Pow(expr.base.base, Mul([expr.base.exp, expr.exp]))
+    return expr
+
+def extractFactor(term):
+    if isinstance(term, Mul):
+        nums = [x for x in term.factors if isinstance(x, Num)]
+        factors = [x for x in term.factors if not isinstance(x, Num)]
+
+        if not nums:
+            num = Num(1)
+        elif len(nums) == 1:
+            num = nums[0]
+        else:
+            num = Mul(nums)
+
+        if not factors:
+            fact = Num(1)
+        elif len(factors) == 1:
+            fact = factors[0]
+        else:
+            fact = Mul(factors)
+
+        return (num, fact)
+
+    return (Num(1), term)
+
+def combineLikeTerms(expr):
+    if isinstance(expr, Add):
+
+        tuples = map(extractFactor, expr.terms)
+
+        result = []
+
+        def merge(num1, num2):
+            if isinstance(num1, Add):
+                return Add(num1.terms + [num2])
+            else:
+                return Add([num1, num2])
+
+        for (num, expr) in tuples:
+
+            newResult = []
+
+            for (n, e) in result:
+                if e == expr:
+                    newResult.append((merge(n, num), e))
+                    break
+                else:
+                    newResult.append((n, e))
+            else:
+                newResult.append((num, expr))
+
+            result = newResult
+
+        result = [Mul([n, e]) for (n, e) in result]
+
+        return result[0] if len(result) == 1 else Add(result)
+
+    return expr
+
+def extractPow(factor):
+    if isinstance(factor, Pow):
+        return (factor.exp, factor.base)
+
+    return (Num(1), factor)
+
+def combineLikeFactors(expr):
+    if isinstance(expr, Mul):
+
+        tuples = map(extractPow, expr.factors)
+
+        result = []
+
+        def merge(num1, num2):
+            if isinstance(num1, Add):
+                return Add(num1.terms + [num2])
+            else:
+                return Add([num1, num2])
+
+        for (num, expr) in tuples:
+
+            newResult = []
+
+            for (n, e) in result:
+                if e == expr:
+                    newResult.append((merge(n, num), e))
+                    break
+                else:
+                    newResult.append((n, e))
+            else:
+                newResult.append((num, expr))
+
+            result = newResult
+
+        result = [Pow(e, n) for (n, e) in result]
+
+        return result[0] if len(result) == 1 else Mul(result)
+
     return expr
 
 
+def simplify(expr):
+    exprOld = 0
+    exprNew = expr
+    while exprOld != exprNew:
+        exprOld = exprNew
+        exprNew = exprNew.map(flattenMul)
+        exprNew = exprNew.map(flattenAdd)
+        exprNew = exprNew.map(removeSub)
+        exprNew = exprNew.map(removeDiv)
+        exprNew = exprNew.map(mulPows)
+        exprNew = exprNew.map(combineLikeTerms)
+        exprNew = exprNew.map(combineLikeFactors)
+        exprNew = exprNew.map(mulZero)
+        exprNew = exprNew.map(mulOne)
+        exprNew = exprNew.map(addZero)
+        exprNew = exprNew.map(powZero)
+        exprNew = exprNew.map(powOne)
+        exprNew = exprNew.map(addConsts)
+        exprNew = exprNew.map(subConsts)
+        exprNew = exprNew.map(mulConsts)
+        exprNew = exprNew.map(divConsts)
+        exprNew = exprNew.map(powConsts)
+    return exprNew
 
-
-def takeDeriv(expr):
-    expr = identityRule(expr)
-    expr = constantRule(expr)
-    expr = constMultRule(expr)
-    expr = sumRule(expr)
-    expr = differenceRule(expr)
-    expr = powerRule(expr)
-    expr = productRule(expr)
-    expr = quotientRule(expr)
-    return expr
-
-print(takeDeriv(Deriv(Mul([Var("x"),Var("x")]), Var("x"))))
+if __name__ == "__main__":
+    # print(simplify(Div(Var("x"), Pow(Var("x"), Num(2)))))
+    expr = Mul([Var('x'), Pow(Var('x'), Num(2)), Pow(Var('x'), Num(3))])
+    print(expr)
+    print(simplify(expr))

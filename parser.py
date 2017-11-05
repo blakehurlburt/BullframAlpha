@@ -33,11 +33,11 @@ def __funcParseAction(fullString, index, arg):
         return AST.Deriv(*arg[1:])
     elif arg[0].sym == "int":
         if len(arg) < 4: #indefinite
-            return AST.Int(*arg[1:])
+            return AST.Int(arg[1:])
         else:
             return AST.DefInt(*arg[1:])
     else:
-        return AST.Apply(arg[0], arg[1])
+        return AST.Apply(AST.Fun(arg[0].sym), arg[1])
 
 func.setParseAction(__funcParseAction)
 
@@ -86,6 +86,9 @@ expr.setParseAction(__exprParseAction)
 
 pattern = expr + pp.StringEnd()
 
+def parse(string):
+    return pattern.parseString(string)[0]
+
 if __name__ == "__main__":
     test = "deriv(sin(x^2^x - cos(4+3*x)) / 4*(-2 +x), x)"
     #test = "int(sin(x^2^x - cos(4+3*x)) / 4*(-2 +x), x, -sin(x), sin(x))"
@@ -93,5 +96,5 @@ if __name__ == "__main__":
     #test = "sin(x^2^x - 3*x+4)"
     #test = "(x^2^x - 3*x + 4) / 2"
     print(test)
-    res = pattern.parseString(test)
+    res = parse(test)
     print(res)
