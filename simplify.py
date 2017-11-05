@@ -1,5 +1,6 @@
 from AST import *
-import math
+from deriv import takeDeriv
+from integral import takeInt
 
 def flattenMul(expr):
     if isinstance(expr, Mul):
@@ -74,9 +75,9 @@ def powConsts(expr):
         return Num(expr.base.val ** expr.exp.val)
     return expr
 
-def lnConst(expr):
-    if isinstance(expr, Apply) and expr.fun == Fun("ln") and isinstance(expr.expr, Num):
-        return Num(math.log(expr.expr.val))
+def lnE(expr):
+    if isinstance(expr, Apply) and expr.fun == Fun("ln") and expr.expr == Var("e"):
+        return Num(1)
     return expr
 
 def mulZero(expr):
@@ -244,45 +245,33 @@ def combineLikeFactors(expr):
 
     return expr
 
-def eSub(expr):
-    expr = expr.sub(Num(math.e), Var("e"))
-    return expr
-
 
 def simplify(expr):
     exprOld = 0
     exprNew = expr
     while exprOld != exprNew:
         exprOld = exprNew
-        #print("A: " + str(exprNew) + "\n")
+        exprNew = takeDeriv(exprNew)
+        exprNew = takeInt(exprNew)
         exprNew = exprNew.map(addConsts)
         exprNew = exprNew.map(subConsts)
         exprNew = exprNew.map(mulConsts)
         exprNew = exprNew.map(divConsts)
         exprNew = exprNew.map(powConsts)
-        exprNew = exprNew.map(lnConst)
-        #print("B: " + str(exprNew) + "\n")
+        exprNew = exprNew.map(lnE)
         exprNew = exprNew.map(flattenMul)
         exprNew = exprNew.map(flattenAdd)
-        #print("C: " + str(exprNew) + "\n")
         exprNew = exprNew.map(removeSub)
         exprNew = exprNew.map(removeDiv)
         exprNew = exprNew.map(mulPows)
-        #print("D: " + str(exprNew) + "\n")
         exprNew = exprNew.map(combineLikeTerms)
-        #print("E: " + str(exprNew) + "\n")
         exprNew = exprNew.map(combineLikeFactors)
-        #print("F: " + str(exprNew) + "\n")
         exprNew = exprNew.map(powZero)
         exprNew = exprNew.map(powOne)
         exprNew = exprNew.map(onePow)
-        #print("G: " + str(exprNew) + "\n")
         exprNew = exprNew.map(mulZero)
         exprNew = exprNew.map(mulOne)
-        #print("H: " + str(exprNew) + "\n")
         exprNew = exprNew.map(addZero)
-        exprNew = exprNew.map(eSub)
-        #print("I: " + str(exprNew) + "\n")
     return exprNew
 
 if __name__ == "__main__":

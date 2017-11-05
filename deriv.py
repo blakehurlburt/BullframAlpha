@@ -1,5 +1,4 @@
 from AST import *
-import math
 from simplify import simplify
 
 def identityRule(expr):
@@ -199,7 +198,8 @@ def lnRule(expr):
     return expr
 
 def takeDeriv(expr):
-    expr = expr.sub(Var("e"), Num(math.e))
+    if not isinstance(expr, Deriv):
+        return expr
     expr = negationRule(expr)
     expr = identityRule(expr)
     expr = constantRule(expr)
@@ -225,7 +225,6 @@ def takeDeriv(expr):
     expr = arccotRule(expr)
     expr = chainRule(expr)
     expr = funExponentRule(expr)
-    #expr = expr.sub(Num(math.e), Var("e"))
     return expr
 
 
