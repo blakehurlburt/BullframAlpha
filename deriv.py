@@ -13,6 +13,12 @@ def constantRule(expr):
             return Num(0)
     return expr
 
+def negationRule(expr):
+    if isinstance(expr, Deriv):
+        if isinstance(expr.expr, Neg):
+            return Mul([Num(-1), takeDeriv(Deriv(expr.expr.exp, expr.sym))])
+    return expr
+
 def constMultRule(expr):
     if isinstance(expr, Deriv):
         if isinstance(expr.expr, Mul):
@@ -192,6 +198,7 @@ def lnRule(expr):
     return expr
 
 def takeDeriv(expr):
+    expr = negationRule(expr)
     expr = identityRule(expr)
     expr = constantRule(expr)
     expr = constMultRule(expr)
@@ -218,4 +225,4 @@ def takeDeriv(expr):
     expr = funExponentRule(expr)
     return expr
 
-print(takeDeriv(Deriv(Apply(Fun("ln"), Apply(Fun("sin"), Mul([Num(2), Var("x")]))), Var("x"))))
+print(takeDeriv(Deriv(Neg(Var("x")), Var("x"))))
