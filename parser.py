@@ -85,29 +85,10 @@ def parse(string):
         cur = root
 
         for rhs, operator in zip(obj.operands[2:], obj.operators[1:]):
-            if isinstance(cur, AST.Add):
-                lhs = cur.terms[-1]
-            elif isinstance(cur, AST.Sub):
-                lhs = cur.right
-            elif isinstance(cur, AST.Mul):
-                lhs = cur.factors[-1]
-            elif isinstance(cur, AST.Div):
-                lhs = cur.bottom
-
-            newNode = makeNode(operator, lhs, rhs)
-
-            if isinstance(cur, AST.Add):
-                cur.terms[-1] = newNode
-            elif isinstance(cur, AST.Sub):
-                cur.right = newNode
-            elif isinstance(cur, AST.Mul):
-                cur.factors[-1] = newNode
-            elif isinstance(cur, AST.Div):
-                cur.bottom = newNode
-
+            newNode = makeNode(operator, cur, rhs)
             cur = newNode
 
-        return root
+        return cur
 
     return res.map(convertLeftBinOp)
 
@@ -123,7 +104,8 @@ if __name__ == "__main__":
     #test = "1+2"
     # test = "deriv(x + 2 * x + 3 + 4 + 5 * x, x)"
     # test = "(x+1)*(x+2)*(2*x+3)"
-    test = "int(x^2, x)"
+    # test = "int(x^2, x)"
+    test = "1 - 2 - 3 - 4"
     print("Input:", test)
     res = parse(test)
     print("Result:", res)
