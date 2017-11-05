@@ -1,3 +1,5 @@
+from fractions import Fraction
+
 class Expr:
     def __repr__(self):
         return str(self)
@@ -124,7 +126,7 @@ class Neg(Expr):
 
 class Num(Expr):
     def __init__(self, val):
-        self.val = val
+        self.val = Fraction(val)
 
     def __str__(self):
         return str(self.val)
