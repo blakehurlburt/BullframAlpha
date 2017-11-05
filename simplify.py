@@ -86,14 +86,127 @@ def mulConsts(expr):
     return expr
 
 def divConsts(expr):
-    if isinstance(expr, Sub) and isinstance(expr.left, Num) and isinstance(expr.right, Num):
-        return Num(expr.left.val / expr.right.val)
+    if isinstance(expr, Sub) and isinstance(expr.top, Num) and isinstance(expr.bottom, Num):
+        return Num(expr.top.val / expr.bottom.val)
     return expr
 
 def powConsts(expr):
     if isinstance(expr, Pow) and isinstance(expr.base, Num) and isinstance(expr.exp, Num):
         return Num(expr.base.val ** expr.exp.val)
     return expr
+
+def removeSub(expr):
+    if isinstance(expr, Sub):
+        return Add([expr.left, Mul([Num(-1), expr.right])])
+    return expr
+
+def removeDiv(expr):
+    if isinstance(expr, Div):
+        return Mul([expr.top, Pow(expr.bottom, Num(-1))])
+    return expr
+
+def mulPows(expr):
+    if isinstance(expr, Pow) and isinstance(expr.base, Pow):
+        return Pow(expr.base.base, Mul([expr.base.exp, expr.exp]))
+    return expr
+
+def extractFactor(term):
+    if isinstance(term, Mul):
+        nums = [x for x in term.factors if isinstance(x, Num)]
+        factors = [x for x in term.factors if not isinstance(x, Num)]
+
+        if not nums:
+            num = Num(1)
+        elif len(nums) == 1:
+            num = nums[0]
+        else:
+            num = Mul(nums)
+
+        if not factors:
+            fact = Num(1)
+        elif len(factors) == 1:
+            fact = factors[0]
+        else:
+            fact = Mul(factors)
+
+        return (num, fact)
+
+    return (Num(1), term)
+
+def combineLikeTerms(expr):
+    if isinstance(expr, Add):
+
+        tuples = map(extractFactor, expr.terms)
+
+        result = []
+
+        def merge(num1, num2):
+            if isinstance(num1, Add):
+                return Add(num1.terms + [num2])
+            else:
+                return Add([num1, num2])
+
+        for (num, expr) in tuples:
+
+            newResult = []
+
+            for (n, e) in result:
+                if e == expr:
+                    newResult.append((merge(n, num), e))
+                    break
+                else:
+                    newResult.append((n, e))
+            else:
+                newResult.append((num, expr))
+
+            result = newResult
+
+        result = [Mul([n, e]) for (n, e) in result]
+
+        return result[0] if len(result) == 1 else Add(result)
+
+    return expr
+
+def extractPow(factor):
+    if isinstance(factor, Pow):
+        return (factor.exp, factor.base)
+
+    return (Num(1), factor)
+
+def combineLikeFactors(expr):
+    if isinstance(expr, Mul):
+
+        tuples = map(extractPow, expr.factors)
+
+        result = []
+
+        def merge(num1, num2):
+            if isinstance(num1, Add):
+                return Add(num1.terms + [num2])
+            else:
+                return Add([num1, num2])
+
+        for (num, expr) in tuples:
+
+            newResult = []
+
+            for (n, e) in result:
+                if e == expr:
+                    newResult.append((merge(n, num), e))
+                    break
+                else:
+                    newResult.append((n, e))
+            else:
+                newResult.append((num, expr))
+
+            result = newResult
+
+        result = [Pow(e, n) for (n, e) in result]
+
+        return result[0] if len(result) == 1 else Mul(result)
+
+    return expr
+
 
 def simplify(expr):
     exprOld = 0
@@ -102,6 +215,11 @@ def simplify(expr):
         exprOld = exprNew
         exprNew = exprNew.map(flattenMul)
         exprNew = exprNew.map(flattenAdd)
+        exprNew = exprNew.map(removeSub)
+        exprNew = exprNew.map(removeDiv)
+        exprNew = exprNew.map(mulPows)
+        exprNew = exprNew.map(combineLikeTerms)
+        exprNew = exprNew.map(combineLikeFactors)
         exprNew = exprNew.map(mulZero)
         exprNew = exprNew.map(mulOne)
         exprNew = exprNew.map(addZero)
@@ -113,5 +231,9 @@ def simplify(expr):
         exprNew = exprNew.map(divConsts)
         exprNew = exprNew.map(powConsts)
     return exprNew
+
 if __name__ == "__main__":
-    print(simplify(Pow(Num(2), Num(4))))
+    # print(simplify(Div(Var("x"), Pow(Var("x"), Num(2)))))
+    expr = Mul([Var('x'), Pow(Var('x'), Num(2)), Pow(Var('x'), Num(3))])
+    print(expr)
+    print(simplify(expr))
