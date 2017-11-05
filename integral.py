@@ -1,7 +1,5 @@
 from AST import *
-from deriv import takeDeriv
 from polydiv import polydiv
-
 
 def constantRule(expr):
     if isinstance(expr, Int):
@@ -177,7 +175,7 @@ def usubRule(expr):
 
             u = expr.expr.bottom
             sub_var = str(expr.sym)+("u")
-            new_integrand = simplify(Div(expr.expr.top, Mul([takeDeriv(Deriv(u, expr.sym)), Var(sub_var)])))
+            new_integrand = simplify.simplify(Div(expr.expr.top, Mul([takeDeriv(Deriv(u, expr.sym)), Var(sub_var)])))
             if  not new_integrand.contains(expr.sym):
                 usubintegral = takeInt(Int(new_integrand, Var(sub_var)))
                 usubintegral = usubintegral.sub(Var(sub_var), u)
@@ -353,10 +351,3 @@ def takeInt(expr):
     expr = usubRule(expr)
     expr = bypartsRule(expr)
     return expr
-
-# test = "int(x*(x+1)^(1/2), x)"
-# print("test: " + test)
-# expr = parse(test)
-# print("expr: " + str(expr))
-# print(takeInt(expr))
-# print(simplify(takeInt(expr)))

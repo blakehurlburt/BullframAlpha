@@ -1,5 +1,4 @@
 import AST
-
 import itertools as it
 
 def foil(expr):
