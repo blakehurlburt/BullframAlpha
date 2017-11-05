@@ -218,7 +218,9 @@ def simplify(expr):
         exprNew = exprNew.map(removeSub)
         exprNew = exprNew.map(removeDiv)
         exprNew = exprNew.map(mulPows)
+        print("before: " + str(exprNew))
         exprNew = exprNew.map(combineLikeTerms)
+        print("after: " + str(exprNew))
         exprNew = exprNew.map(combineLikeFactors)
         exprNew = exprNew.map(mulZero)
         exprNew = exprNew.map(mulOne)
@@ -234,6 +236,6 @@ def simplify(expr):
 
 if __name__ == "__main__":
     # print(simplify(Div(Var("x"), Pow(Var("x"), Num(2)))))
-    expr = Mul([Var('x'), Pow(Var('x'), Num(2)), Pow(Var('x'), Num(3))])
+    expr = Add([Num(2), Num(1)])
     print(expr)
     print(simplify(expr))
