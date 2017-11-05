@@ -1,4 +1,6 @@
-import parser
+assert(__name__ == "__main__")
+
+from parser import parse
 from deriv import takeDeriv
 from simplify import simplify
 
@@ -16,7 +18,7 @@ tests.append("deriv(sin(x^2^x - cos(4+3*x)) / 4*(-2 +x), x)")
 for t in tests:
     print("---------------------------------------------------------")
     print("Trying to evaluate: " + t)
-    expr = parser.parse(t)
+    expr = parse(t)
     print("Parses to: " + str(expr))
     expr = takeDeriv(expr)
     print("Which has derivative: " + str(expr))
