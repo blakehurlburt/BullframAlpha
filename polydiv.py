@@ -141,10 +141,10 @@ def polydiv(expr, var):
     quotient = divide(numer, denom, var)
     return quotient
 
-import simplify
+from simplify import simplify
+
 if __name__ == "__main__":
     from parser import parse
-    from simplify import simplify
     # test = "(3*x+2)*(4*x+7) / (2*x+3)"
     test = "(3*x^4 - 2*x^3 + x^2 - 7) / (x^2 + 3*x - 4)"
     print(test)

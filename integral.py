@@ -352,4 +352,15 @@ def takeInt(expr):
     expr = usubRule(expr)
     expr = bypartsRule(expr)
     return expr
+
 from simplify import simplify
+
+if __name__ == "__main__":
+    from parser import parse
+
+    test = "int(x*(x+1)^(1/2), x)"
+    print("test: " + test)
+    expr = parse(test)
+    print("expr: " + str(expr))
+    print(takeInt(expr))
+    print(simplify(takeInt(expr)))
