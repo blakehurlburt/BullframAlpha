@@ -131,6 +131,8 @@ def extractFactor(term):
 
         return (num, fact)
 
+    if isinstance(term, Num):
+        return (term, Num(1))
     return (Num(1), term)
 
 def combineLikeTerms(expr):
@@ -234,6 +236,6 @@ def simplify(expr):
 
 if __name__ == "__main__":
     # print(simplify(Div(Var("x"), Pow(Var("x"), Num(2)))))
-    expr = Mul([Var('x'), Pow(Var('x'), Num(2)), Pow(Var('x'), Num(3))])
+    expr = Add([Num(2), Num(3)])
     print(expr)
     print(simplify(expr))
