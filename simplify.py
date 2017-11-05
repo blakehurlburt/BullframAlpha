@@ -152,9 +152,11 @@ def combineLikeTerms(expr):
 
             newResult = []
 
-            for (n, e) in result:
+            for i in range(0, len(result)):
+                (n, e) = result[i]
                 if e == expr:
                     newResult.append((merge(n, num), e))
+                    newResult += result[i+1:]
                     break
                 else:
                     newResult.append((n, e))
@@ -236,6 +238,6 @@ def simplify(expr):
 
 if __name__ == "__main__":
     # print(simplify(Div(Var("x"), Pow(Var("x"), Num(2)))))
-    expr = Add([Num(2), Num(3)])
+    expr = Add([Num(2), Var("x"), Num(-1), Mul([Num(-1), Var("x")])])
     print(expr)
     print(simplify(expr))
