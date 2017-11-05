@@ -174,6 +174,9 @@ def simplify(expr):
         exprOld = exprNew
         exprNew = exprNew.map(flattenMul)
         exprNew = exprNew.map(flattenAdd)
+        exprNew = exprNew.map(removeSub)
+        exprNew = exprNew.map(removeDiv)
+        exprNew = exprNew.map(mulPows)
         exprNew = exprNew.map(combineLikeTerms)
         exprNew = exprNew.map(mulZero)
         exprNew = exprNew.map(mulOne)
@@ -185,9 +188,6 @@ def simplify(expr):
         exprNew = exprNew.map(mulConsts)
         exprNew = exprNew.map(divConsts)
         exprNew = exprNew.map(powConsts)
-        exprNew = exprNew.map(removeSub)
-        exprNew = exprNew.map(removeDiv)
-        exprNew = exprNew.map(mulPows)
     return exprNew
 
 if __name__ == "__main__":
