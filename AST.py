@@ -126,7 +126,10 @@ class Neg(Expr):
 
 class Num(Expr):
     def __init__(self, val):
-        self.val = Fraction(val)
+        try:
+            self.val = Fraction(val)
+        except:
+            self.val = val
 
     def __str__(self):
         return str(self.val)
