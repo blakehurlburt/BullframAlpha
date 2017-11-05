@@ -33,7 +33,7 @@ def __funcParseAction(fullString, index, arg):
         return AST.Deriv(*arg[1:])
     elif arg[0].sym == "int":
         if len(arg) < 4: #indefinite
-            return AST.Int(arg[1:])
+            return AST.Int(*arg[1:])
         else:
             return AST.DefInt(*arg[1:])
     else:
@@ -113,7 +113,7 @@ def parse(string):
 
 
 if __name__ == "__main__":
-    test = "deriv(sin(x^2^x - cos(4+3*x)) / 4*(-2 +x + 3 - 1), x)"
+    #test = "deriv(sin(x^2^x - cos(4+3*x)) / 4*(-2 +x + 3 - 1), x)"
     #test = "int(sin(x^2^x - cos(4+3*x)) / 4*(-2 +x), x, -sin(x), sin(x))"
     #test = "sin / 2"
     #test = "sin(x^2^x - 3*x+4)"
@@ -122,7 +122,8 @@ if __name__ == "__main__":
     # test = "1 + 2 + 3 - 4 * 5 + 6"
     #test = "1+2"
     # test = "deriv(x + 2 * x + 3 + 4 + 5 * x, x)"
-    test = "(x+1)*(x+2)*(2*x+3)"
+    # test = "(x+1)*(x+2)*(2*x+3)"
+    test = "int(x^2, x)"
     print("Input:", test)
     res = parse(test)
     print("Result:", res)
