@@ -255,7 +255,7 @@ class Fun:
         return self.sym
 
     def __eq__(self, other):
-        return self.sym == self.other
+        return self.sym == other.sym
 
     def map(self, fun):
         return fun(self)
