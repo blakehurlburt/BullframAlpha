@@ -85,7 +85,6 @@ def parse(string):
         cur = root
 
         for rhs, operator in zip(obj.operands[2:], obj.operators[1:]):
-            print(rhs)
             if isinstance(cur, AST.Add):
                 lhs = cur.terms[-1]
             elif isinstance(cur, AST.Sub):
