@@ -1,4 +1,5 @@
 from AST import *
+import math
 
 def flattenMul(expr):
     if isinstance(expr, Mul):
@@ -71,6 +72,11 @@ def divConsts(expr):
 def powConsts(expr):
     if isinstance(expr, Pow) and isinstance(expr.base, Num) and isinstance(expr.exp, Num):
         return Num(expr.base.val ** expr.exp.val)
+    return expr
+
+def lnConst(expr):
+    if isinstance(expr, Apply) and expr.fun == Fun("ln") and isinstance(expr.expr, Num):
+        return Num(math.log(expr.expr.val))
     return expr
 
 def mulZero(expr):
@@ -238,38 +244,45 @@ def combineLikeFactors(expr):
 
     return expr
 
+def eSub(expr):
+    expr = expr.sub(Num(math.e), Var("e"))
+    return expr
+
+
 def simplify(expr):
     exprOld = 0
     exprNew = expr
     while exprOld != exprNew:
         exprOld = exprNew
-        # print("A: " + str(exprNew) + "\n")
-        exprNew = exprNew.map(flattenMul)
-        exprNew = exprNew.map(flattenAdd)
-        # print("B: " + str(exprNew) + "\n")
+        #print("A: " + str(exprNew) + "\n")
         exprNew = exprNew.map(addConsts)
         exprNew = exprNew.map(subConsts)
         exprNew = exprNew.map(mulConsts)
         exprNew = exprNew.map(divConsts)
         exprNew = exprNew.map(powConsts)
-        # print("C: " + str(exprNew) + "\n")
+        exprNew = exprNew.map(lnConst)
+        #print("B: " + str(exprNew) + "\n")
+        exprNew = exprNew.map(flattenMul)
+        exprNew = exprNew.map(flattenAdd)
+        #print("C: " + str(exprNew) + "\n")
         exprNew = exprNew.map(removeSub)
         exprNew = exprNew.map(removeDiv)
         exprNew = exprNew.map(mulPows)
-        # print("D: " + str(exprNew) + "\n")
+        #print("D: " + str(exprNew) + "\n")
         exprNew = exprNew.map(combineLikeTerms)
-        # print("E: " + str(exprNew) + "\n")
+        #print("E: " + str(exprNew) + "\n")
         exprNew = exprNew.map(combineLikeFactors)
-        # print("F: " + str(exprNew) + "\n")
+        #print("F: " + str(exprNew) + "\n")
         exprNew = exprNew.map(powZero)
         exprNew = exprNew.map(powOne)
         exprNew = exprNew.map(onePow)
-        # print("G: " + str(exprNew) + "\n")
+        #print("G: " + str(exprNew) + "\n")
         exprNew = exprNew.map(mulZero)
         exprNew = exprNew.map(mulOne)
-        # print("H: " + str(exprNew) + "\n")
+        #print("H: " + str(exprNew) + "\n")
         exprNew = exprNew.map(addZero)
-        # print("I: " + str(exprNew) + "\n")
+        exprNew = exprNew.map(eSub)
+        #print("I: " + str(exprNew) + "\n")
     return exprNew
 
 if __name__ == "__main__":
