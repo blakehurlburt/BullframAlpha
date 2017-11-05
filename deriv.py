@@ -83,7 +83,7 @@ def exponentRule(expr):
         if isinstance(expr.expr, Pow) and expr.expr.exp.contains(expr.sym)\
             and not expr.expr.base.contains(expr.sym):
 
-            return Mul([Mul([expr.expr.base, expr.expr.exp]), Apply(Fun("ln"), expr.expr.exp)])
+            return Mul([Mul([expr.expr.base, expr.expr.exp]), Apply(Fun("ln"), expr.expr.base)])
     return expr
 
 def funExponentRule(expr):

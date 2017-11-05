@@ -111,18 +111,22 @@ def powOne(expr):
         return expr.base
     return expr
 
+def onePow(expr):
+    if isinstance(expr, Pow) and expr.base == Num(1):
+        return Num(1)
+    return expr
+
 def removeSub(expr):
     if isinstance(expr, Sub):
         if isinstance(expr.right, Add):
             return Add([expr.left]+[Mul([Num(-1), t]) for t in expr.right.terms])
-        else:
-            return Add([expr.left, Mul([Num(-1), expr.right])])
+        return Add([expr.left, Mul([Num(-1), expr.right])])
     return expr
 
 def removeDiv(expr):
     if isinstance(expr, Div):
-        if isinstance(expr.right, Mul):
-            return Mul([expr.left]+[Pow([t, Num(-1)]) for t in expr.right.factors])
+        if isinstance(expr.bottom, Mul):
+            return Mul([expr.top]+[Pow(t, Num(-1)) for t in expr.bottom.factors])
         return Mul([expr.top, Pow(expr.bottom, Num(-1))])
     return expr
 
@@ -232,7 +236,6 @@ def combineLikeFactors(expr):
 
     return expr
 
-
 def simplify(expr):
     exprOld = 0
     exprNew = expr
@@ -241,6 +244,12 @@ def simplify(expr):
         print("A: " + str(exprNew) + "\n")
         exprNew = exprNew.map(flattenMul)
         exprNew = exprNew.map(flattenAdd)
+        print("B: " + str(exprNew) + "\n")
+        exprNew = exprNew.map(addConsts)
+        exprNew = exprNew.map(subConsts)
+        exprNew = exprNew.map(mulConsts)
+        exprNew = exprNew.map(divConsts)
+        exprNew = exprNew.map(powConsts)
         print("C: " + str(exprNew) + "\n")
         exprNew = exprNew.map(removeSub)
         exprNew = exprNew.map(removeDiv)
@@ -252,6 +261,7 @@ def simplify(expr):
         print("F: " + str(exprNew) + "\n")
         exprNew = exprNew.map(powZero)
         exprNew = exprNew.map(powOne)
+        exprNew = exprNew.map(onePow)
         print("G: " + str(exprNew) + "\n")
         exprNew = exprNew.map(mulZero)
         exprNew = exprNew.map(mulOne)
@@ -261,6 +271,6 @@ def simplify(expr):
     return exprNew
 
 if __name__ == "__main__":
-    expr = Sub(Add([Num(2), Var("x")]), Add([Num(1), Var("x")]))
-    print(expr)
-    print(simplify(expr))
+    expr = Div(Mul([Num(2), Var("x"), Apply(Fun("cos"), Var("u"))]), Mul([Num(2), Var("x")]))
+    print("Expression: " + str(expr))
+    print("Simplified: " + str(simplify(expr)))
