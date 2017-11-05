@@ -22,6 +22,57 @@ def flattenAdd(expr):
         return Add(newTerms)
     return expr
 
+def addConsts(expr):
+    if isinstance(expr, Add):
+        sum = 0
+        nonconsts = []
+        for t in expr.terms:
+            if isinstance(t, Num):
+                sum += t.val
+            else:
+                nonconsts.append(t)
+        if len(nonconsts) == 0:
+            return Num(sum)
+        if sum != 0:
+            return Add([Num(sum)]+nonconsts)
+        if len(nonconsts) == 1:
+            return nonconsts[0]
+        return Add(nonconsts)
+    return expr
+
+def subConsts(expr):
+    if isinstance(expr, Sub) and isinstance(expr.left, Num) and isinstance(expr.right, Num):
+        return Num(expr.left.val - expr.right.val)
+    return expr
+
+def mulConsts(expr):
+    if isinstance(expr, Mul):
+        prod = 1
+        nonconsts = []
+        for f in expr.factors:
+            if isinstance(f, Num):
+                prod *= f.val
+            else:
+                nonconsts.append(f)
+        if len(nonconsts) == 0:
+            return Num(prod)
+        if prod != 1:
+            return Mul([Num(prod)]+nonconsts)
+        if len(nonconsts) == 1:
+            return nonconsts[0]
+        return Mul(nonconsts)
+    return expr
+
+def divConsts(expr):
+    if isinstance(expr, Div) and isinstance(expr.top, Num) and isinstance(expr.bottom, Num):
+        return Num(expr.top.val / expr.bottom.val)
+    return expr
+
+def powConsts(expr):
+    if isinstance(expr, Pow) and isinstance(expr.base, Num) and isinstance(expr.exp, Num):
+        return Num(expr.base.val ** expr.exp.val)
+    return expr
+
 def mulZero(expr):
     if isinstance(expr, Mul):
         if any(map(lambda x: x == Num(0), expr.factors)):
@@ -60,48 +111,22 @@ def powOne(expr):
         return expr.base
     return expr
 
-def addConsts(expr):
-    if isinstance(expr, Add):
-        sum = 0
-        for t in expr.terms:
-            if not isinstance(t, Num):
-                return expr
-            sum += t.val
-        return Num(sum)
-    return expr
-
-def subConsts(expr):
-    if isinstance(expr, Sub) and isinstance(expr.left, Num) and isinstance(expr.right, Num):
-        return Num(expr.left.val - expr.right.val)
-    return expr
-
-def mulConsts(expr):
-    if isinstance(expr, Mul):
-        prod = 1
-        for f in expr.factors:
-            if not isinstance(f, Num):
-                return expr
-            prod *= f.val
-        return Num(prod)
-    return expr
-
-def divConsts(expr):
-    if isinstance(expr, Sub) and isinstance(expr.top, Num) and isinstance(expr.bottom, Num):
-        return Num(expr.top.val / expr.bottom.val)
-    return expr
-
-def powConsts(expr):
-    if isinstance(expr, Pow) and isinstance(expr.base, Num) and isinstance(expr.exp, Num):
-        return Num(expr.base.val ** expr.exp.val)
+def onePow(expr):
+    if isinstance(expr, Pow) and expr.base == Num(1):
+        return Num(1)
     return expr
 
 def removeSub(expr):
     if isinstance(expr, Sub):
+        if isinstance(expr.right, Add):
+            return Add([expr.left]+[Mul([Num(-1), t]) for t in expr.right.terms])
         return Add([expr.left, Mul([Num(-1), expr.right])])
     return expr
 
 def removeDiv(expr):
     if isinstance(expr, Div):
+        if isinstance(expr.bottom, Mul):
+            return Mul([expr.top]+[Pow(t, Num(-1)) for t in expr.bottom.factors])
         return Mul([expr.top, Pow(expr.bottom, Num(-1))])
     return expr
 
@@ -131,6 +156,8 @@ def extractFactor(term):
 
         return (num, fact)
 
+    if isinstance(term, Num):
+        return (term, Num(1))
     return (Num(1), term)
 
 def combineLikeTerms(expr):
@@ -150,9 +177,11 @@ def combineLikeTerms(expr):
 
             newResult = []
 
-            for (n, e) in result:
+            for i in range(0, len(result)):
+                (n, e) = result[i]
                 if e == expr:
                     newResult.append((merge(n, num), e))
+                    newResult += result[i+1:]
                     break
                 else:
                     newResult.append((n, e))
@@ -207,33 +236,41 @@ def combineLikeFactors(expr):
 
     return expr
 
-
 def simplify(expr):
     exprOld = 0
     exprNew = expr
     while exprOld != exprNew:
         exprOld = exprNew
+        print("A: " + str(exprNew) + "\n")
         exprNew = exprNew.map(flattenMul)
         exprNew = exprNew.map(flattenAdd)
-        exprNew = exprNew.map(removeSub)
-        exprNew = exprNew.map(removeDiv)
-        exprNew = exprNew.map(mulPows)
-        exprNew = exprNew.map(combineLikeTerms)
-        exprNew = exprNew.map(combineLikeFactors)
-        exprNew = exprNew.map(mulZero)
-        exprNew = exprNew.map(mulOne)
-        exprNew = exprNew.map(addZero)
-        exprNew = exprNew.map(powZero)
-        exprNew = exprNew.map(powOne)
+        print("B: " + str(exprNew) + "\n")
         exprNew = exprNew.map(addConsts)
         exprNew = exprNew.map(subConsts)
         exprNew = exprNew.map(mulConsts)
         exprNew = exprNew.map(divConsts)
         exprNew = exprNew.map(powConsts)
+        print("C: " + str(exprNew) + "\n")
+        exprNew = exprNew.map(removeSub)
+        exprNew = exprNew.map(removeDiv)
+        exprNew = exprNew.map(mulPows)
+        print("D: " + str(exprNew) + "\n")
+        exprNew = exprNew.map(combineLikeTerms)
+        print("E: " + str(exprNew) + "\n")
+        exprNew = exprNew.map(combineLikeFactors)
+        print("F: " + str(exprNew) + "\n")
+        exprNew = exprNew.map(powZero)
+        exprNew = exprNew.map(powOne)
+        exprNew = exprNew.map(onePow)
+        print("G: " + str(exprNew) + "\n")
+        exprNew = exprNew.map(mulZero)
+        exprNew = exprNew.map(mulOne)
+        print("H: " + str(exprNew) + "\n")
+        exprNew = exprNew.map(addZero)
+        print("I: " + str(exprNew) + "\n")
     return exprNew
 
 if __name__ == "__main__":
-    # print(simplify(Div(Var("x"), Pow(Var("x"), Num(2)))))
-    expr = Mul([Var('x'), Pow(Var('x'), Num(2)), Pow(Var('x'), Num(3))])
-    print(expr)
-    print(simplify(expr))
+    expr = Div(Mul([Num(2), Var("x"), Apply(Fun("cos"), Var("u"))]), Mul([Num(2), Var("x")]))
+    print("Expression: " + str(expr))
+    print("Simplified: " + str(simplify(expr)))

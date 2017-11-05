@@ -13,6 +13,12 @@ def constantRule(expr):
             return Num(0)
     return expr
 
+def negationRule(expr):
+    if isinstance(expr, Deriv):
+        if isinstance(expr.expr, Neg):
+            return Mul([Num(-1), takeDeriv(Deriv(expr.expr.exp, expr.sym))])
+    return expr
+
 def constMultRule(expr):
     if isinstance(expr, Deriv):
         if isinstance(expr.expr, Mul):
@@ -77,7 +83,7 @@ def exponentRule(expr):
         if isinstance(expr.expr, Pow) and expr.expr.exp.contains(expr.sym)\
             and not expr.expr.base.contains(expr.sym):
 
-            return Mul([Mul([expr.expr.base, expr.expr.exp]), Apply(Fun("ln"), expr.expr.exp)])
+            return Mul([Mul([expr.expr.base, expr.expr.exp]), Apply(Fun("ln"), expr.expr.base)])
     return expr
 
 def funExponentRule(expr):
@@ -192,6 +198,7 @@ def lnRule(expr):
     return expr
 
 def takeDeriv(expr):
+    expr = negationRule(expr)
     expr = identityRule(expr)
     expr = constantRule(expr)
     expr = constMultRule(expr)
