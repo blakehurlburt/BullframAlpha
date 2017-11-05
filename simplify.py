@@ -1,7 +1,4 @@
 from AST import *
-from deriv import takeDeriv
-from integral import takeInt
-
 def flattenMul(expr):
     if isinstance(expr, Mul):
         newFactors = []
@@ -273,6 +270,9 @@ def simplify(expr):
         exprNew = exprNew.map(mulOne)
         exprNew = exprNew.map(addZero)
     return exprNew
+
+from deriv import takeDeriv
+from integral import takeInt
 
 if __name__ == "__main__":
     expr = Div(Mul([Num(2), Var("x"), Apply(Fun("cos"), Var("u"))]), Mul([Num(2), Var("x")]))

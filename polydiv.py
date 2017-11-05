@@ -141,6 +141,7 @@ def polydiv(expr, var):
     quotient = divide(numer, denom, var)
     return quotient
 
+import simplify
 if __name__ == "__main__":
     from parser import parse
     from simplify import simplify

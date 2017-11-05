@@ -1,5 +1,6 @@
 from AST import *
 from polydiv import polydiv
+from deriv import takeDeriv
 
 def constantRule(expr):
     if isinstance(expr, Int):
@@ -175,7 +176,7 @@ def usubRule(expr):
 
             u = expr.expr.bottom
             sub_var = str(expr.sym)+("u")
-            new_integrand = simplify.simplify(Div(expr.expr.top, Mul([takeDeriv(Deriv(u, expr.sym)), Var(sub_var)])))
+            new_integrand = simplify(Div(expr.expr.top, Mul([takeDeriv(Deriv(u, expr.sym)), Var(sub_var)])))
             if  not new_integrand.contains(expr.sym):
                 usubintegral = takeInt(Int(new_integrand, Var(sub_var)))
                 usubintegral = usubintegral.sub(Var(sub_var), u)
@@ -202,13 +203,13 @@ def usubRule(expr):
                 usubintegral = usubintegral.sub(Var(sub_var),u)
                 return usubintegral
 
-            # else:
-            #     long_div_integrand = simplify(polydiv(new_integrand, expr.sym))
-            #
-            #     if not long_div_integrand.contains(expr.sym):
-            #         usubintegral = takeInt(Int(long_div_integrand, Var(sub_var)))
-            #         usubintegral = usubintegral.sub(Var(sub_var), u)
-            #         return usubintegral
+            else:
+                long_div_integrand = simplify(polydiv(new_integrand, expr.sym))
+
+                if not long_div_integrand.contains(expr.sym):
+                    usubintegral = takeInt(Int(long_div_integrand, Var(sub_var)))
+                    usubintegral = usubintegral.sub(Var(sub_var), u)
+                    return usubintegral
 
         if isinstance(new_expr.factors[0], Pow):
             u = new_expr.factors[0].base
@@ -351,3 +352,4 @@ def takeInt(expr):
     expr = usubRule(expr)
     expr = bypartsRule(expr)
     return expr
+from simplify import simplify
