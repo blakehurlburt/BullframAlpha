@@ -1,7 +1,5 @@
 from AST import *
-from simplify import simplify
 from deriv import takeDeriv
-from parser import parse
 from polydiv import polydiv
 
 
