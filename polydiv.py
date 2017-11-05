@@ -1,9 +1,12 @@
 import AST
-from simplify import simplify 
+from simplify import simplify
 
 import itertools as it
 
 def foil(expr):
+    if not isinstance(expr, AST.Mul):
+        return (expr, AST.Num(1))
+
     numerator = []
     denominator = []
     for factor in expr.factors:
@@ -73,10 +76,12 @@ def divide(numer, denom, var):
         return 1
 
     def getCoefficient(polynomial, power):
+        if not isinstance(polynomial, AST.Add):
+            polynomial = AST.Add([polynomial])
         # print("P:", power)
         for term in polynomial.terms:
             if isinstance(term, AST.Num):
-                coeff = term
+                coeff = term.val
                 exp = 0
             elif isinstance(term, AST.Pow):
                 coeff = 1
