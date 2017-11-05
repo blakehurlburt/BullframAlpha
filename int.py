@@ -189,7 +189,7 @@ def usubRule(expr):
         if not isinstance(new_expr, Mul):
             new_expr = Mul([Num(1), new_expr])
 
-        if isinstance(new_expr.factors[1], Pow):
+        if isinstance(new_expr.factors[1], Pow) and new_expr.factors[1].base.contains(expr.sym):
             u = new_expr.factors[1].base
             sub_var = str(expr.sym)+("u")
             new_integrand = simplify(Div(Mul([new_expr.factors[0], Pow(Var(sub_var), new_expr.factors[1].exp)]),\
@@ -336,9 +336,10 @@ def takeInt(expr):
     expr = arcsecRule(expr)
     expr = usubRule(expr)
     expr = bypartsRule(expr)
+    #expr = expr.sub(Num(math.e), Var("e"))
     return expr
 
-test = "int(x*cos(x)*sin(x), x)"
+test = "int(x*e^x, x)"
 print("test: " + test)
 expr = parse(test)
 print("expr: " + str(expr))

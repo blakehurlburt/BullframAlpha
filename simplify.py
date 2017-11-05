@@ -244,6 +244,11 @@ def combineLikeFactors(expr):
 
     return expr
 
+def eSub(expr):
+    expr = expr.sub(Num(math.e), Var("e"))
+    return expr
+
+
 def simplify(expr):
     exprOld = 0
     exprNew = expr
@@ -276,6 +281,7 @@ def simplify(expr):
         exprNew = exprNew.map(mulOne)
         #print("H: " + str(exprNew) + "\n")
         exprNew = exprNew.map(addZero)
+        exprNew = exprNew.map(eSub)
         #print("I: " + str(exprNew) + "\n")
     return exprNew
 

@@ -225,10 +225,9 @@ def takeDeriv(expr):
     expr = arccotRule(expr)
     expr = chainRule(expr)
     expr = funExponentRule(expr)
+    #expr = expr.sub(Num(math.e), Var("e"))
     return expr
 
 
-print(takeDeriv(Deriv(Pow(Var("e"),Var("x")), Var("x"))))
-print(simplify(takeDeriv(Deriv(Pow(Var("e"),Var("x")), Var("x")))))
-#if __name__ == "__main__":
-    #print(takeDeriv(Deriv(Apply(Fun("ln"), Apply(Fun("sin"), Mul([Num(2), Var("x")]))), Var("x"))))
+if __name__ == "__main__":
+    print(takeDeriv(Deriv(Pow(Var("e"), Var("x")), Var("x"))))
