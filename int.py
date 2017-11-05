@@ -31,11 +31,26 @@ def differenceRule(expr):
     return expr
 
 
-def lnRule(expr):
+def overxRule(expr):
     if isinstance(expr, Int):
         if isinstance(expr.expr, Div) and expr.expr.bottom == expr.sym:
             return Add([Apply(Fun("ln"), Apply(Fun("abs"), expr.sym)), "C"])
     return expr
+
+def lnRule(expr):
+    if isinstance(expr, Int):
+        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "ln"\
+        and expr.expr.expr == expr.sym:
+            return Add([Sub(Mul([expr.sym, Apply(Fun("ln"), expr.sym)]), expr.sym),"C"])
+    return expr
+
+def exponentRule(expr):
+    if isinstance(expr, Int):
+        if isinstance(expr.expr, Pow) and expr.expr.exp.contains(expr.sym)\
+                    and not expr.expr.base.contains(expr.sym):
+                return Add([Div(expr.expr, Apply(Fun("ln"), expr.expr.base)), "C"])
+    return expr
+
 
 def powerRule(expr):
     if isinstance(expr, Int):
@@ -144,7 +159,9 @@ def takeInt(expr):
     expr = sumRule(expr)
     expr = differenceRule(expr)
     expr = lnRule(expr)
+    expr = overxRule(expr)
     expr = powerRule(expr)
+    expr = exponentRule(expr)
     expr = sinRule(expr)
     expr = cosRule(expr)
     expr = sec2Rule(expr)
@@ -156,5 +173,4 @@ def takeInt(expr):
     expr = arcsecRule(expr)
     return expr
 
-print(takeInt(Int(Div(Num(1), Mul([Apply(Fun("abs"), Var("x")), Pow(Sub(Pow(Var("x"), Num(2)), Num(1)),\
-      Div(Num(1), Num(2)))])), Var("x"))))
+print(takeInt(Int(Apply(Fun("ln"), Var("x")), Var("x"))))
