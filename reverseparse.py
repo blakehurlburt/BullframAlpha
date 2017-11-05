@@ -64,4 +64,4 @@ def toString(expr):
                 s += str(0xB0)
             elif char == '/':
                 s += str(83)
-                 
+        return s
