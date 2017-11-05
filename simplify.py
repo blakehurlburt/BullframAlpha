@@ -167,6 +167,47 @@ def combineLikeTerms(expr):
 
     return expr
 
+def extractPow(factor):
+    if isinstance(factor, Pow):
+        return (factor.exp, factor.base)
+
+    return (Num(1), factor)
+
+def combineLikeFactors(expr):
+    if isinstance(expr, Mul):
+
+        tuples = map(extractPow, expr.factors)
+
+        result = []
+
+        def merge(num1, num2):
+            if isinstance(num1, Add):
+                return Add(num1.terms + [num2])
+            else:
+                return Add([num1, num2])
+
+        for (num, expr) in tuples:
+
+            newResult = []
+
+            for (n, e) in result:
+                if e == expr:
+                    newResult.append((merge(n, num), e))
+                    break
+                else:
+                    newResult.append((n, e))
+            else:
+                newResult.append((num, expr))
+
+            result = newResult
+
+        result = [Pow(e, n) for (n, e) in result]
+
+        return result[0] if len(result) == 1 else Mul(result)
+
+    return expr
+
+
 def simplify(expr):
     exprOld = 0
     exprNew = expr
@@ -178,6 +219,7 @@ def simplify(expr):
         exprNew = exprNew.map(removeDiv)
         exprNew = exprNew.map(mulPows)
         exprNew = exprNew.map(combineLikeTerms)
+        exprNew = exprNew.map(combineLikeFactors)
         exprNew = exprNew.map(mulZero)
         exprNew = exprNew.map(mulOne)
         exprNew = exprNew.map(addZero)
@@ -191,7 +233,7 @@ def simplify(expr):
     return exprNew
 
 if __name__ == "__main__":
-    print(simplify(Div(Var("x"), Pow(Var("x"), Num(2)))))
-    #expr = Add([Var('x'), Mul([Num(2), Var('x')]), Mul([Num(3), Var('x')])])
-    #print(expr)
-    #print(simplify(expr))
+    # print(simplify(Div(Var("x"), Pow(Var("x"), Num(2)))))
+    expr = Mul([Var('x'), Pow(Var('x'), Num(2)), Pow(Var('x'), Num(3))])
+    print(expr)
+    print(simplify(expr))
