@@ -85,7 +85,12 @@ def divide(numer, denom, var):
                 coeff = 1
                 exp = term.exp.val
             elif isinstance(term, AST.Mul):
-                coeff = term.factors[0].val
+                node = term.factors[0]
+                if isinstance(node, AST.Var):
+                    coeff = node.sym
+                elif isinstance(node, AST.Num):
+                    coeff = node.val
+                    
                 if isinstance(term.factors[1], AST.Var):
                     exp = 1
                 else:
