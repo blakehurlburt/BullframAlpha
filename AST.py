@@ -79,7 +79,7 @@ class Div(Expr):
         return replace if self == find else Div(self.top.sub(find, replace), self.bottom.sub(find, replace))
 
     def map(self, fun):
-        return fun(Div(self.left.map(fun), self.right.map(fun)))
+        return fun(Div(self.top.map(fun), self.bottom.map(fun)))
 
 
 class Pow(Expr):
@@ -255,7 +255,7 @@ class Fun:
         return self.sym
 
     def __eq__(self, other):
-        return self.sym == self.other
+        return self.sym == other.sym
 
     def map(self, fun):
         return fun(self)
