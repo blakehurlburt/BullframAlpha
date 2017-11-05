@@ -36,6 +36,10 @@ def __funcParseAction(fullString, index, arg):
             return AST.Int(*arg[1:])
         else:
             return AST.DefInt(*arg[1:])
+    elif arg[0].sym == "sqrt":
+        return AST.Pow(arg[1], AST.Num(1.0/2.0))
+    elif arg[0].sym == "curt":
+        return AST.Pow(arg[1], AST.Num(1.0/3.0))
     else:
         return AST.Apply(AST.Fun(arg[0].sym), arg[1])
 
