@@ -86,13 +86,28 @@ def mulConsts(expr):
     return expr
 
 def divConsts(expr):
-    if isinstance(expr, Sub) and isinstance(expr.left, Num) and isinstance(expr.right, Num):
-        return Num(expr.left.val / expr.right.val)
+    if isinstance(expr, Sub) and isinstance(expr.top, Num) and isinstance(expr.bottom, Num):
+        return Num(expr.top.val / expr.bottom.val)
     return expr
 
 def powConsts(expr):
     if isinstance(expr, Pow) and isinstance(expr.base, Num) and isinstance(expr.exp, Num):
         return Num(expr.base.val ** expr.exp.val)
+    return expr
+
+def removeSub(expr):
+    if isinstance(expr, Sub):
+        return Add([expr.left, Mul([Num(-1), expr.right])])
+    return expr
+
+def removeDiv(expr):
+    if isinstance(expr, Div):
+        return Mul([expr.top, Pow(expr.bottom, Num(-1))])
+    return expr
+
+def mulPows(expr):
+    if isinstance(expr, Pow) and isinstance(expr.base, Pow):
+        return Pow(expr.base.base, Mul([expr.base.exp, expr.exp]))
     return expr
 
 def simplify(expr):
@@ -112,6 +127,10 @@ def simplify(expr):
         exprNew = exprNew.map(mulConsts)
         exprNew = exprNew.map(divConsts)
         exprNew = exprNew.map(powConsts)
+        exprNew = exprNew.map(removeSub)
+        exprNew = exprNew.map(removeDiv)
+        exprNew = exprNew.map(mulPows)
     return exprNew
+
 if __name__ == "__main__":
-    print(simplify(Pow(Num(2), Num(4))))
+    print(simplify(Div(Var("x"), Pow(Var("x"), Num(2)))))
