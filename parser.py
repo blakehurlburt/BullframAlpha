@@ -84,7 +84,8 @@ def parse(string):
         root = makeNode(obj.operators[0], obj.operands[0], obj.operands[1])
         cur = root
 
-        for rhs, operator in zip(obj.operands[1:], obj.operators[2:]):
+        for rhs, operator in zip(obj.operands[2:], obj.operators[1:]):
+            print(rhs)
             if isinstance(cur, AST.Add):
                 lhs = cur.terms[-1]
             elif isinstance(cur, AST.Sub):
@@ -122,6 +123,7 @@ if __name__ == "__main__":
     # test = "1 + 2 + 3 - 4 * 5 + 6"
     #test = "1+2"
     # test = "deriv(x + 2 * x + 3 + 4 + 5 * x, x)"
+    test = "(x+1)*(x+2)*(2*x+3)"
     print("Input:", test)
     res = parse(test)
     print("Result:", res)
