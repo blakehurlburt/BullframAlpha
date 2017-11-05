@@ -22,6 +22,57 @@ def flattenAdd(expr):
         return Add(newTerms)
     return expr
 
+def addConsts(expr):
+    if isinstance(expr, Add):
+        sum = 0
+        nonconsts = []
+        for t in expr.terms:
+            if isinstance(t, Num):
+                sum += t.val
+            else:
+                nonconsts.append(t)
+        if len(nonconsts) == 0:
+            return Num(sum)
+        if sum != 0:
+            return Add([Num(sum)]+nonconsts)
+        if len(nonconsts) == 1:
+            return nonconsts[0]
+        return Add(nonconsts)
+    return expr
+
+def subConsts(expr):
+    if isinstance(expr, Sub) and isinstance(expr.left, Num) and isinstance(expr.right, Num):
+        return Num(expr.left.val - expr.right.val)
+    return expr
+
+def mulConsts(expr):
+    if isinstance(expr, Mul):
+        prod = 1
+        nonconsts = []
+        for f in expr.factors:
+            if isinstance(f, Num):
+                prod *= f.val
+            else:
+                nonconsts.append(f)
+        if len(nonconsts) == 0:
+            return Num(prod)
+        if prod != 1:
+            return Mul([Num(prod)]+nonconsts)
+        if len(nonconsts) == 1:
+            return nonconsts[0]
+        return Mul(nonconsts)
+    return expr
+
+def divConsts(expr):
+    if isinstance(expr, Div) and isinstance(expr.top, Num) and isinstance(expr.bottom, Num):
+        return Num(expr.top.val / expr.bottom.val)
+    return expr
+
+def powConsts(expr):
+    if isinstance(expr, Pow) and isinstance(expr.base, Num) and isinstance(expr.exp, Num):
+        return Num(expr.base.val ** expr.exp.val)
+    return expr
+
 def mulZero(expr):
     if isinstance(expr, Mul):
         if any(map(lambda x: x == Num(0), expr.factors)):
@@ -60,48 +111,18 @@ def powOne(expr):
         return expr.base
     return expr
 
-def addConsts(expr):
-    if isinstance(expr, Add):
-        sum = 0
-        for t in expr.terms:
-            if not isinstance(t, Num):
-                return expr
-            sum += t.val
-        return Num(sum)
-    return expr
-
-def subConsts(expr):
-    if isinstance(expr, Sub) and isinstance(expr.left, Num) and isinstance(expr.right, Num):
-        return Num(expr.left.val - expr.right.val)
-    return expr
-
-def mulConsts(expr):
-    if isinstance(expr, Mul):
-        prod = 1
-        for f in expr.factors:
-            if not isinstance(f, Num):
-                return expr
-            prod *= f.val
-        return Num(prod)
-    return expr
-
-def divConsts(expr):
-    if isinstance(expr, Sub) and isinstance(expr.top, Num) and isinstance(expr.bottom, Num):
-        return Num(expr.top.val / expr.bottom.val)
-    return expr
-
-def powConsts(expr):
-    if isinstance(expr, Pow) and isinstance(expr.base, Num) and isinstance(expr.exp, Num):
-        return Num(expr.base.val ** expr.exp.val)
-    return expr
-
 def removeSub(expr):
     if isinstance(expr, Sub):
-        return Add([expr.left, Mul([Num(-1), expr.right])])
+        if isinstance(expr.right, Add):
+            return Add([expr.left]+[Mul([Num(-1), t]) for t in expr.right.terms])
+        else:
+            return Add([expr.left, Mul([Num(-1), expr.right])])
     return expr
 
 def removeDiv(expr):
     if isinstance(expr, Div):
+        if isinstance(expr.right, Mul):
+            return Mul([expr.left]+[Pow([t, Num(-1)]) for t in expr.right.factors])
         return Mul([expr.top, Pow(expr.bottom, Num(-1))])
     return expr
 
@@ -215,29 +236,29 @@ def simplify(expr):
     exprNew = expr
     while exprOld != exprNew:
         exprOld = exprNew
+        print("A: " + str(exprNew) + "\n")
         exprNew = exprNew.map(flattenMul)
         exprNew = exprNew.map(flattenAdd)
+        print("C: " + str(exprNew) + "\n")
         exprNew = exprNew.map(removeSub)
         exprNew = exprNew.map(removeDiv)
         exprNew = exprNew.map(mulPows)
-        print("before: " + str(exprNew))
+        print("D: " + str(exprNew) + "\n")
         exprNew = exprNew.map(combineLikeTerms)
-        print("after: " + str(exprNew))
+        print("E: " + str(exprNew) + "\n")
         exprNew = exprNew.map(combineLikeFactors)
-        exprNew = exprNew.map(mulZero)
-        exprNew = exprNew.map(mulOne)
-        exprNew = exprNew.map(addZero)
+        print("F: " + str(exprNew) + "\n")
         exprNew = exprNew.map(powZero)
         exprNew = exprNew.map(powOne)
-        exprNew = exprNew.map(addConsts)
-        exprNew = exprNew.map(subConsts)
-        exprNew = exprNew.map(mulConsts)
-        exprNew = exprNew.map(divConsts)
-        exprNew = exprNew.map(powConsts)
+        print("G: " + str(exprNew) + "\n")
+        exprNew = exprNew.map(mulZero)
+        exprNew = exprNew.map(mulOne)
+        print("H: " + str(exprNew) + "\n")
+        exprNew = exprNew.map(addZero)
+        print("I: " + str(exprNew) + "\n")
     return exprNew
 
 if __name__ == "__main__":
-    # print(simplify(Div(Var("x"), Pow(Var("x"), Num(2)))))
-    expr = Add([Num(2), Num(3)])
+    expr = Sub(Add([Num(2), Var("x")]), Add([Num(1), Var("x")]))
     print(expr)
     print(simplify(expr))
