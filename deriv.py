@@ -1,5 +1,6 @@
 from AST import *
-
+import math
+from simplify import simplify
 
 def identityRule(expr):
     if isinstance(expr, Deriv):
@@ -25,7 +26,7 @@ def constMultRule(expr):
             consts = []
             notconsts = []
             for e in expr.expr.factors:
-                if isinstance(e, Num) or isinstance(e, Var) and e != expr.sym:
+                if isinstance(e, Num) or isinstance(e, Var) and e != expr.sym: #TODO check for containment of variable
                     consts.append(e)
                 else:
                     notconsts.append(e)
@@ -83,7 +84,7 @@ def exponentRule(expr):
         if isinstance(expr.expr, Pow) and expr.expr.exp.contains(expr.sym)\
             and not expr.expr.base.contains(expr.sym):
 
-            return Mul([Mul([expr.expr.base, expr.expr.exp]), Apply(Fun("ln"), expr.expr.base)])
+            return Mul([Pow(expr.expr.base, expr.expr.exp), Apply(Fun("ln"), expr.expr.base)])
     return expr
 
 def funExponentRule(expr):
@@ -100,49 +101,49 @@ def funExponentRule(expr):
 
 def sinRule(expr):
     if isinstance(expr, Deriv):
-        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "sin"\
+        if isinstance(expr.expr, Apply) and expr.expr.fun == "sin"\
         and expr.expr.expr == expr.sym:
             return Apply(Fun("cos"), expr.expr.expr)
     return expr
 
 def cosRule(expr):
     if isinstance(expr, Deriv):
-        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "cos"\
+        if isinstance(expr.expr, Apply) and expr.expr.fun == "cos"\
         and expr.expr.expr == expr.sym:
             return Mul([Apply(Fun("sin"), expr.expr.expr), Num(-1)])
     return expr
 
 def tanRule(expr):
     if isinstance(expr, Deriv):
-        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "tan"\
+        if isinstance(expr.expr, Apply) and expr.expr.fun == "tan"\
         and expr.expr.expr == expr.sym:
             return Pow(Apply(Fun("sec"), expr.expr.expr), Num(2))
     return expr
 
 def secRule(expr):
     if isinstance(expr, Deriv):
-        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "sec"\
+        if isinstance(expr.expr, Apply) and expr.expr.fun == "sec"\
         and expr.expr.expr == expr.sym:
             return Mul([Apply(Fun("sec"), expr.expr.expr), Apply(Fun("tan"), expr.expr.expr)])
     return expr
 
 def cscRule(expr):
     if isinstance(expr, Deriv):
-        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "csc"\
+        if isinstance(expr.expr, Apply) and expr.expr.fun == "csc"\
         and expr.expr.expr == expr.sym:
             return Mul([Num(-1), Mul([Apply(Fun("csc"), expr.expr.expr), Apply(Fun("cot"), expr.expr.expr)])])
     return expr
 
 def cotRule(expr):
     if isinstance(expr, Deriv):
-        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "cot"\
+        if isinstance(expr.expr, Apply) and expr.expr.fun == "cot"\
         and expr.expr.expr == expr.sym:
             return Mul([Num(-1), Pow(Apply(Fun("csc"), expr.expr.expr), Num(2))])
     return expr
 
 def arcsinRule(expr):
     if isinstance(expr, Deriv):
-        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "arcsin"\
+        if isinstance(expr.expr, Apply) and expr.expr.fun == "arcsin"\
         and expr.expr.expr == expr.sym:
             return Div(Num(1), Pow(Sub(Num(1), Pow(expr.expr.expr, Num(2))), Div(Num(1),Num(2))))
     return expr
@@ -155,21 +156,21 @@ def chainRule(expr):
 
 def arccosRule(expr):
     if isinstance(expr, Deriv):
-        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "arccos"\
+        if isinstance(expr.expr, Apply) and expr.expr.fun == "arccos"\
         and expr.expr.expr == expr.sym:
             return Div(Num(-1), Pow(Sub(Num(1), Pow(expr.expr.expr, Num(2))), Div(Num(1),Num(2))))
     return expr
 
 def arctanRule(expr):
     if isinstance(expr, Deriv):
-        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "arctan"\
+        if isinstance(expr.expr, Apply) and expr.expr.fun == "arctan"\
         and expr.expr.expr == expr.sym:
             return Div(Num(1), Add([Num(1), Pow(expr.expr.expr, Num(2))]))
     return expr
 
 def arcsecRule(expr):
     if isinstance(expr, Deriv):
-        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "arcsec"\
+        if isinstance(expr.expr, Apply) and expr.expr.fun == "arcsec"\
         and expr.expr.expr == expr.sym:
             return Div(Num(1), Mul([Apply(Fun("abs"), expr.expr.expr),\
                    (Pow(Sub(Pow(expr.expr.expr, Num(2)), Num(1)), Div(Num(1),Num(2))))]))
@@ -177,7 +178,7 @@ def arcsecRule(expr):
 
 def arccscRule(expr):
     if isinstance(expr, Deriv):
-        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "arccsc"\
+        if isinstance(expr.expr, Apply) and expr.expr.fun== "arccsc"\
         and expr.expr.expr == expr.sym:
             return Div(Num(-1), Mul([Apply(Fun("abs"), expr.expr.expr),\
                    (Pow(Sub(Pow(expr.expr.expr, Num(2)), Num(1)), Div(Num(1),Num(2))))]))
@@ -185,19 +186,20 @@ def arccscRule(expr):
 
 def arccotRule(expr):
     if isinstance(expr, Deriv):
-        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "arccot"\
+        if isinstance(expr.expr, Apply) and expr.expr.fun == "arccot"\
         and expr.expr.expr == expr.sym:
             return Div(Num(-1), Add([Num(1), Pow(expr.expr.expr, Num(2))]))
     return expr
 
 def lnRule(expr):
     if isinstance(expr, Deriv):
-        if isinstance(expr.expr, Apply) and expr.expr.fun.sym == "ln"\
+        if isinstance(expr.expr, Apply) and expr.expr.fun == "ln"\
         and expr.expr.expr == expr.sym:
             return Div(Num(1), expr.sym)
     return expr
 
 def takeDeriv(expr):
+    expr = expr.sub(Var("e"), Num(math.e))
     expr = negationRule(expr)
     expr = identityRule(expr)
     expr = constantRule(expr)
@@ -225,5 +227,8 @@ def takeDeriv(expr):
     expr = funExponentRule(expr)
     return expr
 
-if __name__ == "__main__":
-    print(takeDeriv(Deriv(Apply(Fun("ln"), Apply(Fun("sin"), Mul([Num(2), Var("x")]))), Var("x"))))
+
+print(takeDeriv(Deriv(Pow(Var("e"),Var("x")), Var("x"))))
+print(simplify(takeDeriv(Deriv(Pow(Var("e"),Var("x")), Var("x")))))
+#if __name__ == "__main__":
+    #print(takeDeriv(Deriv(Apply(Fun("ln"), Apply(Fun("sin"), Mul([Num(2), Var("x")]))), Var("x"))))
