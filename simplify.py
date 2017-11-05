@@ -194,9 +194,11 @@ def combineLikeFactors(expr):
 
             newResult = []
 
-            for (n, e) in result:
+            for i in range(0, len(result)):
+                (n, e) = result[i]
                 if e == expr:
                     newResult.append((merge(n, num), e))
+                    newResult += result[i+1:]
                     break
                 else:
                     newResult.append((n, e))
