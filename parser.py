@@ -32,7 +32,7 @@ def __funcParseAction(fullString, index, arg):
     if arg[0].sym == "deriv":
         return AST.Deriv(*arg[1:])
     elif arg[0].sym == "int":
-        if len(arg) < 4: #indefinite
+        if len(arg) < 4 or arg[2] == " " and arg[3] == " ": #indefinite
             return AST.Int(*arg[1:])
         else:
             return AST.DefInt(*arg[1:])

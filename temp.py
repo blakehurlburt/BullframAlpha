@@ -1,23 +1,18 @@
 from AST import *
 
-def encode(s):
-    if isinstance(s, str):
-        return s.encode()
-    return s
-
 def toString(expr):
     if isinstance(expr, Deriv):
         return bytes([0x25]) + toString(expr.expr) + bytes([0x2B]) + toString(expr.sym) + bytes([0x11])
     if isinstance(expr, Int):
         return bytes([0x24]) + toString(expr.expr) + bytes([0x2B]) + toString(expr.sym) + bytes([0x11])
     if isinstance(expr, Add):
-        return bytes([0x10]) + b"".join([toString(t) + bytes([0x70]) for t in expr.terms][:-1]) + bytes([0x11])
+        return bytes([0x10]) + "".join([toString(t) + bytes([0x70]) for t in expr.terms][:-1]) + bytes([0x11])
     if isinstance(expr, Sub):
         return toString(expr.left) + bytes([0x71]) + toString(expr.right)
     if isinstance(expr, Neg):
         return bytes([0xB0]) + toString(expr.exp)
     if isinstance(expr, Mul):
-        return bytes([0x10]) + b"".join([encode(toString(f)) + bytes([0x82]) for f in expr.factors][:-1]) + bytes([0x11])
+        return bytes([0x10]) + "".join([toString(f) + bytes([0x82]) for f in expr.factors][:-1]) + bytes([0x11])
     if isinstance(expr, Div):
         return toString(expr.top) + bytes([0x83]) + toString(expr.bottom)
     if isinstance(expr, Pow):
@@ -58,15 +53,13 @@ def toString(expr):
             return bytes([0xC3]) + bytes([0x10])
         if expr.sym == "arccot":
             return bytes([0xC7]) + bytes([0x10])
-        return toString(expr.sym) + toString(expr.expr)
     if isinstance(expr, Var):
         return expr.sym
     if isinstance(expr, Num):
-        s=b""
-        for char in str(expr):
-            o = ord(char)
-            if  0x30 <= o <= 0x39:
-                s += bytes([o])
+        s=""
+        for char in expr:
+            if  0x30 <= ord(char) <= 0x39:
+                s += bytes([char])
             elif char == ".":
                 s += bytes([0x3A])
             elif char == "-":

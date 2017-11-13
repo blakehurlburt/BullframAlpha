@@ -1,7 +1,10 @@
 def parse(string):
     res = ""
-    for c in string:
-        o = ord(c)
+    for o in string:
+        try:
+            c = chr(o)
+        except:
+            pass
         if o == 0x24:
             res += "deriv("
         elif o == 0x25:
@@ -9,11 +12,11 @@ def parse(string):
         elif o == 0x2B:
             res += ","
         elif 0x30 <= o <= 0x39:
-            res += o # digit
+            res += c # digit
         elif o == 0x3A:
             res += "."
-        elif 0x41 <= A <= 0x5A:
-            res += o # letter
+        elif 0x41 <= o <= 0x5A:
+            res += c # letter
         elif o == 0x70:
             res += "+"
         elif o == 0x71:
@@ -51,4 +54,4 @@ def parse(string):
         else:
             print("unknown ord", o)
 
-        return res
+    return res
